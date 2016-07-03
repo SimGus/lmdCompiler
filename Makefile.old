@@ -1,0 +1,26 @@
+CC = gcc
+FLAGS = -g -Wall --std=c99
+PROG = main
+
+$(PROG) : main.o compiler.o preamble.o pile.o
+	$(CC) $(FLAGS) -o $(PROG) main.o compiler.o preamble.o pile.o
+
+main.o : main.c error.h compiler.h compiler.o
+	$(CC) $(FLAGS) -c main.c
+
+compiler.o : compiler.c compiler.h error.h preamble.o pile.o
+	$(CC) $(FLAGS) -c compiler.c
+
+preamble.o : preamble.c preamble.h error.h
+	$(CC) $(FLAGS) -c preamble.c
+
+pile.o : pile.c pile.h error.h
+	$(CC) $(FLAGS) -c pile.c
+
+clean :
+	rm *.o
+
+cleanall : clean
+	rm $(PROG)
+
+exe : $(PROG) clean
