@@ -1,3 +1,8 @@
+#Ignore executables without extension
+*
+!*.*
+!*/
+
 # Object files
 *.o
 *.ko
@@ -32,5 +37,3 @@
 *.dSYM/
 *.su
 
-# Output directory
-Files/

@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include <stdbool.h>
 
 #include "error.h"
 
@@ -76,8 +75,7 @@ void printHelp()
 
 int main(int argc, char *argv[])
 {
-	bool inputSet = false, outputSet = false;
-	char *inputFileName, *outputFileName;
+	char *inputFileName = NULL, *outputFileName = NULL;
 	if (argc <= 1 || strcmp(argv[1], "--help") == 0)
 	{
 		printHelp();
@@ -89,38 +87,34 @@ int main(int argc, char *argv[])
 		{
 			if (strcmp(argv[i], "-o") == 0)
 			{
-				if (outputSet)
+				if (outputFileName != NULL)
 				{
 					ERROR_MSG("main", "invalid arguments (try --help)");
 					free(outputFileName);
-					if (inputSet)
+					if (inputFileName != NULL)
 						free(inputFileName);
 					return EXIT_FAILURE;
 				}
 
 				i++;
 				outputFileName = argToOutputFileName(argv[i]);
-				outputSet = true;
-				//printf("Set out to %s\n", outputFileName);
 			}
 			else
 			{
-				if (inputSet)
+				if (inputFileName != NULL)
 				{
 					ERROR_MSG("main", "invalid arguments (try --help)");
 					free(inputFileName);
-					if (outputSet)
+					if (outputFileName != NULL)
 						free(outputFileName);
 					return EXIT_FAILURE;
 				}
 
 				inputFileName = argToInputFileName(argv[i]);
-				inputSet = true;
-				//printf("Set in to %s\n", inputFileName);
 			}
 		}
 
-		if (!outputSet)
+		if (outputFileName == NULL)
 		{
 			outputFileName = strdup(inputFileName);
 			replaceExtension(outputFileName);
