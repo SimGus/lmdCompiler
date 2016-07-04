@@ -30,19 +30,24 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    //translate line by line
    initPreamble();
 
+   fputs("\\begin{document}\n", tmpBodyOutputFile);
+
    char* line;
    while ((line = getNextLineFromFile()) != NULL)
    {
-
+      interpretLine(tmpBodyOutputFile, line);
       free(line);
    }
    fclose(inputFile);
+
+   fputs("\\end{document}\n", tmpBodyOutputFile);
 
    //open output file
    outputFile = fopen(outputFileName, "w");
    if (outputFile == NULL)
    {
       ERROR_MSG("compile", "Couldn't open or create output file");
+      freePreamble();
       fclose(tmpBodyOutputFile);
       deleteFile(tmpBodyOutputFilePath);
       free(tmpBodyOutputFilePath);
@@ -52,6 +57,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    //write preamble to output file
    if (insertPreamble(tmpBodyOutputFile, outputFile) != RETURN_SUCCESS)
    {
+      freePreamble();
       fclose(outputFile);
       fclose(tmpBodyOutputFile);
       deleteFile(tmpBodyOutputFilePath);
@@ -60,6 +66,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    }
 
    //close output file
+   freePreamble();
    fclose(outputFile);
 
    //close temporary file
@@ -74,24 +81,9 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    return RETURN_SUCCESS;
 }
 
-char* getTmpFileName(const char* outputFileName)
+void interpretLine(FILE* outputFile, const char* line)
 {
-   char* tmpBodyOutputFilePath;
-	char* tmpFileName = malloc( (strlen(outputFileName)+1)*sizeof(char) );
-	strcpy(tmpFileName, outputFileName);
-	if (strcmp(dirname(tmpFileName), ".") == 0)
-	{
-		tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
-		strcpy(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME);
-	}
-   else
-	{
-		strcpy(tmpFileName, outputFileName);
-		tmpBodyOutputFilePath = malloc( (strlen(outputFileName)+strlen(TMP_OUTPUT_FILENAME))*sizeof(char) );
-		sprintf(tmpBodyOutputFilePath, "%s/%s", dirname(tmpFileName), TMP_OUTPUT_FILENAME);
-	}
-	free(tmpFileName);
-   return tmpBodyOutputFilePath;
+
 }
 
 char* getNextLineFromFile()
@@ -116,6 +108,26 @@ char* getNextLineFromFile()
    fseek(inputFile, 1, SEEK_CUR);
 
    return line;
+}
+
+char* getTmpFileName(const char* outputFileName)
+{
+   char* tmpBodyOutputFilePath;
+	char* tmpFileName = malloc( (strlen(outputFileName)+1)*sizeof(char) );
+	strcpy(tmpFileName, outputFileName);
+	if (strcmp(dirname(tmpFileName), ".") == 0)
+	{
+		tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
+		strcpy(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME);
+	}
+   else
+	{
+		strcpy(tmpFileName, outputFileName);
+		tmpBodyOutputFilePath = malloc( (strlen(outputFileName)+strlen(TMP_OUTPUT_FILENAME))*sizeof(char) );
+		sprintf(tmpBodyOutputFilePath, "%s/%s", dirname(tmpFileName), TMP_OUTPUT_FILENAME);
+	}
+	free(tmpFileName);
+   return tmpBodyOutputFilePath;
 }
 
 STATUS deleteFile(const char* filePath)
