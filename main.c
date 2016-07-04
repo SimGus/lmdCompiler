@@ -3,6 +3,7 @@
 #include <string.h>
 
 #include "error.h"
+#include "compiler.h"
 
 char* argToInputFileName(const char* inputArg)
 {
@@ -55,8 +56,8 @@ void replaceExtension(char* string)
 	int length = strlen(string);
 	if (length <= 3)
 	{
-		char msg[256] = "couldn't replace .lmd extension with .tex : output file name is ";
-		sprintf(msg, "%s%s", msg, string);
+		char msg[256] = "Couldn't replace .lmd extension with .tex : output file name is";
+		snprintf(msg, 256-strlen(msg), "%s %s", msg, string);
 		WARNING_FUNC("replaceExtension", msg);
 		return;
 	}
@@ -89,7 +90,7 @@ int main(int argc, char *argv[])
 			{
 				if (outputFileName != NULL)
 				{
-					ERROR_MSG("main", "invalid arguments (try --help)");
+					ERROR_MSG("main", "Invalid arguments (try --help)");
 					free(outputFileName);
 					if (inputFileName != NULL)
 						free(inputFileName);
@@ -103,7 +104,7 @@ int main(int argc, char *argv[])
 			{
 				if (inputFileName != NULL)
 				{
-					ERROR_MSG("main", "invalid arguments (try --help)");
+					ERROR_MSG("main", "Invalid arguments (try --help)");
 					free(inputFileName);
 					if (outputFileName != NULL)
 						free(outputFileName);
@@ -116,13 +117,14 @@ int main(int argc, char *argv[])
 
 		if (outputFileName == NULL)
 		{
-			outputFileName = strdup(inputFileName);
+			outputFileName = malloc( (strlen(inputFileName)+1)*sizeof(char) );
+			strcpy(outputFileName, inputFileName);
 			replaceExtension(outputFileName);
 			if (strcmp(outputFileName, inputFileName) == 0)
 			{
 				free(inputFileName);
 				free(outputFileName);
-				ERROR_MSG("main", "output file name is the same as input file name");
+				ERROR_MSG("main", "Output file name is the same as input file name");
 				return EXIT_FAILURE;
 			}
 		}
@@ -131,10 +133,14 @@ int main(int argc, char *argv[])
 	printf("input : %s\n", inputFileName);
 	printf("output : %s\n", outputFileName);
 
+	STATUS err = compile(inputFileName, outputFileName);
+	if (err != RETURN_SUCCESS)
+		puts("The compilation ended with an error code");
+	else
+		puts("Done");
+
 	free(inputFileName);
 	free(outputFileName);
-
-	puts("Done");
 
 	return EXIT_SUCCESS;
 }

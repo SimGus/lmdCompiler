@@ -1,0 +1,64 @@
+# Syntaxe d'un langage de *markdown* à traduire en LaTeX
+# _Définition_
+# 2-6-2016
+# Simon Gustin
+
+## _Caractères_
+### **Typographie**
+		Texte normal
+		*Texte italique*
+		**Texte gras**
+		_Texte souligné_
+		~Texte barré~
+		!!Texte important!!
+		>> Citation (>>)
+
+### *Caractères spéciaux* %comment
+	À n'utiliser que si la compilation les interprète comme du markdown
+	\\ backslash
+	\_ underscore
+	\# croisillon
+	\~ tilde
+	etc.
+	
+	\... pour ne pas remplacer ... par …
+	
+	$ @ € ° | & £ µ \[ \] {} \%
+	
+## _Mise en page_
+	Paragraphe
+	Passage à la ligne
+
+	<img image.png label w:h>
+	<http://link.com>
+	<http://link.com/ label>
+	[Plain text]
+	
+	[
+	Plain text
+	]
+	
+	--
+	|Tableau|cellule 2|
+	--(---------------)
+	
+	%commentaire
+	
+	+---------+--------------+
+	|Titre tableau spécifique|
+	+---------+--------------+
+	|cellule  |cellule       |
+	+---------+--------------+
+
+### Énumérations
+	+ item 1
+	+ item 2
+		+ item 2.a
+		+ item 2.b
+	
+	1. liste 1
+	2. liste 2
+		+ item 2.a
+		+ item 2.b
+			a. liste 2.b.1
+			b. liste 2.b.2

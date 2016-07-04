@@ -9,7 +9,7 @@
 #include <unistd.h>
 
 #include "error.h"
-#include "compiler.h"
+#include "usefulFunctions.h"
 
 #define FGETS_LINE_LENGTH  1024
 
