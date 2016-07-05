@@ -75,6 +75,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
 void translateLineByLine(FILE* bodyOutputFile)
 {
    fputs("\\begin{document}\n", bodyOutputFile);
+   fputs("\\maketitle\n\n", bodyOutputFile);
 
    char* line;
    int firstNonSpaceIndex;
@@ -98,28 +99,41 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       char* translatedTitle = NULL;
       translateString(partTitle, &translatedTitle);
 
+      int commentIndex = getFirstIndexOfComment(line);
+
       if (line[1] != '#')//title
       {
-         printf("line : '%s'\n", line);
-         printf("title : '%s'\n", partTitle);
-         printf("translated : '%s'\n", translatedTitle);
          addLineToTitle(translatedTitle);
+         if (commentIndex >= 0)
+            addCommentToTitle(&line[commentIndex]);
       }
       else if (line[2] != '#')//part
       {
-
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\\part{%s}%s\n\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\\part{%s}\n\n", translatedTitle);
       }
       else if (line[3] != '#')//section
       {
-
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\t\\section{%s}%s\n\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\t\\section{%s}\n\n", translatedTitle);
       }
       else if (line[4] != '#')//subsection
       {
-
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\t\t\\subsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\t\t\\subsection{%s}\n\n", translatedTitle);
       }
       else if (line[5] != '#')//subsubsection
       {
-
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\t\t\t\\subsubsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\t\t\t\\subsubsection{%s}\n\n", translatedTitle);
       }
       else//paragraph
       {
@@ -226,6 +240,18 @@ char* getTitleOfPart(const char* line)
    free(tmp);
 
    return answer;
+}
+
+int getFirstIndexOfComment(const char* line)
+{
+   if (line[0]=='%')
+      return 0;
+   for (int i=1; line[i]!='\0'; i++)
+   {
+      if (line[i]=='%' && line[i-1]!='\\')
+         return i;
+   }
+   return -1;
 }
 
 void translateString(const char* source, char** destination)

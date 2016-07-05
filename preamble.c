@@ -41,7 +41,7 @@ void addLineToTitle(const char* newLine)
       }
       else
       {
-         reallocate(&(preamble.title), strlen(preamble.title)+strlen(newLine)+4);//TODO check 4 (3?)
+         reallocate(&(preamble.title), strlen(preamble.title)+strlen(newLine)+3);
          sprintf(preamble.title, "%s\\\\%s", preamble.title, newLine);
       }
    }
@@ -53,7 +53,7 @@ void addLineToTitle(const char* newLine)
 
 void addCommentToTitle(const char* newComment)
 {
-   if (newComment != NULL || strcmp(newComment, "%%") || strcmp(newComment, "%% "))
+   if (newComment != NULL || strcmp(newComment, "%") != 0 || strcmp(newComment, "% ") != 0)
    {
       if (preamble.titleComments == NULL)
       {

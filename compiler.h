@@ -69,6 +69,17 @@ STATUS deleteFile(const char* filePath);
  */
 char* getTitleOfPart(const char* line);
 
+/*
+ * @return :   the index of the part of line where the comment begins (the '%')
+ *             -1 if no comment was found
+ * @post : DO NOT FREE the string returned
+ */
+int getFirstIndexOfComment(const char* line);
+
+/*
+ * Translates source (in markdown) to destination (in LaTeX)
+ * @post : *destination MUST be freed
+ */
 void translateString(const char* source, char** destination);
 
 #endif //_COMPILER_H_
