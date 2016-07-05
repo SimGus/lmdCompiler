@@ -82,4 +82,9 @@ int getFirstIndexOfComment(const char* line);
  */
 void translateString(const char* source, char** destination);
 
+/*
+ * Removes useless spaces in string (the string changes), in general there are spaces there because there is a comment afterwards in the input
+ */
+void removeUselessSpaces(char* string);
+
 #endif //_COMPILER_H_

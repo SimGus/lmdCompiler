@@ -98,6 +98,7 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       char* partTitle = getTitleOfPart(line);
       char* translatedTitle = NULL;
       translateString(partTitle, &translatedTitle);
+      removeUselessSpaces(translatedTitle);
 
       int commentIndex = getFirstIndexOfComment(line);
 
@@ -137,7 +138,10 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else//paragraph
       {
-
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}%s\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}\n", translatedTitle);
       }
 
       free(partTitle);
@@ -475,4 +479,22 @@ void translateString(const char* source, char** destination)
 	*destination = translatedString;
 
 	pileFree(&environments);
+}
+
+void removeUselessSpaces(char* string)
+{
+   if (string[0] == ' ' || string[0] == '\t')
+   {
+      int i;
+      for (i=0; string[i]==' '||string[i]=='\t'; i++)
+         ;
+      string = &string[i];
+   }
+
+   int lastCharIndex = strlen(string)-1;
+   while (string[lastCharIndex]==' ' || string[lastCharIndex]=='\t')
+   {
+      string[lastCharIndex] = '\0';
+      lastCharIndex = strlen(string)-1;
+   }
 }
