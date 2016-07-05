@@ -77,14 +77,19 @@ char* getTitleOfPart(const char* line);
 int getFirstIndexOfComment(const char* line);
 
 /*
+ * Removes useless spaces in string (the string changes), in general there are spaces there because there is a comment afterwards in the input
+ */
+void removeUselessSpaces(char* string);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */
 void translateString(const char* source, char** destination);
 
 /*
- * Removes useless spaces in string (the string changes), in general there are spaces there because there is a comment afterwards in the input
+ * Translates string (in mardown) in LaTeX and writes it directly in the file bodyOutputFile
  */
-void removeUselessSpaces(char* string);
+void translateToFile(FILE* bodyOutputFile, const char* string);
 
 #endif //_COMPILER_H_

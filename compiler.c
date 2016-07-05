@@ -2,6 +2,7 @@
 
 FILE* inputFile = NULL;
 int currentLineNb = 0;
+char nbAlinea = 0;
 
 STATUS compile(const char* inputFileName, const char* outputFileName)
 {
@@ -107,6 +108,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
          addLineToTitle(translatedTitle);
          if (commentIndex >= 0)
             addCommentToTitle(&line[commentIndex]);
+
+         nbAlinea = 1;
       }
       else if (line[2] != '#')//part
       {
@@ -114,6 +117,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\\part{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
             fprintf(bodyOutputFile, "\t\\part{%s}\n\n", translatedTitle);
+
+         nbAlinea = 2;
       }
       else if (line[3] != '#')//section
       {
@@ -121,6 +126,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\t\\section{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
             fprintf(bodyOutputFile, "\t\t\\section{%s}\n\n", translatedTitle);
+
+         nbAlinea = 3;
       }
       else if (line[4] != '#')//subsection
       {
@@ -128,6 +135,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\t\t\\subsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
             fprintf(bodyOutputFile, "\t\t\t\\subsection{%s}\n\n", translatedTitle);
+
+         nbAlinea = 4;
       }
       else if (line[5] != '#')//subsubsection
       {
@@ -135,6 +144,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\t\t\t\\subsubsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
             fprintf(bodyOutputFile, "\t\t\t\t\\subsubsection{%s}\n\n", translatedTitle);
+
+         nbAlinea = 5;
       }
       else//paragraph
       {
@@ -142,6 +153,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}%s\n", translatedTitle, &line[commentIndex]);
          else
             fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}\n", translatedTitle);
+
+         nbAlinea = 6;
       }
 
       free(partTitle);
@@ -153,7 +166,20 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else
    {
+      /*char* translatedLine = NULL;
+      translateString(line, &translatedLine);
+      printf("line : '%s'\n", line);
+      printf("translated : '%s'\n", translatedLine);
+      fputs(translatedLine, bodyOutputFile);
+      fprintf(bodyOutputFile, "\n\n");
 
+      free(translatedLine);*/
+
+      for (int i=0; i<nbAlinea; i++)
+         fputc('\t', bodyOutputFile);
+      translateToFile(bodyOutputFile, line);
+      fputc('\n', bodyOutputFile);
+      fputc('\n', bodyOutputFile);//to have a new line in the pdf document
    }
 }
 
@@ -256,6 +282,24 @@ int getFirstIndexOfComment(const char* line)
          return i;
    }
    return -1;
+}
+
+void removeUselessSpaces(char* string)
+{
+   if (string[0] == ' ' || string[0] == '\t')
+   {
+      int i;
+      for (i=0; string[i]==' '||string[i]=='\t'; i++)
+         ;
+      string = &string[i];
+   }
+
+   int lastCharIndex = strlen(string)-1;
+   while (string[lastCharIndex]==' ' || string[lastCharIndex]=='\t')
+   {
+      string[lastCharIndex] = '\0';
+      lastCharIndex = strlen(string)-1;
+   }
 }
 
 void translateString(const char* source, char** destination)
@@ -481,20 +525,83 @@ void translateString(const char* source, char** destination)
 	pileFree(&environments);
 }
 
-void removeUselessSpaces(char* string)
+void translateToFile(FILE* bodyOutputFile, const char* string)
 {
-   if (string[0] == ' ' || string[0] == '\t')
+   for (int i=0; string[i]!='\0'; i++)
    {
-      int i;
-      for (i=0; string[i]==' '||string[i]=='\t'; i++)
-         ;
-      string = &string[i];
+      printf("%c", string[i]);
+      switch (string[i])
+      {
+         case '$':
+            fputs("\\$", bodyOutputFile);
+            break;
+         case '{':
+            fputs("\\{", bodyOutputFile);
+            break;
+         case '}':
+            fputs("\\}", bodyOutputFile);
+            break;
+         case '&':
+            fputs("\\&", bodyOutputFile);
+            break;
+         case '.':
+            if (string[i+1]=='.' && string[i+2]=='.')//TODO check we're not out of the string
+            {
+               i += 2;
+               fputs("\\dots ", bodyOutputFile);
+            }
+            else
+               fputc('.', bodyOutputFile);
+            break;
+         case '\\':
+            i++;
+            switch (string[i])
+            {
+               case '\\':
+                  fputs("\\textbackslash ", bodyOutputFile);
+                  break;
+               case '~':
+                  fputs("$\\sim$", bodyOutputFile);
+                  break;
+               case '%':
+                  fputs("\\%%", bodyOutputFile);
+                  break;
+               case '*':
+                  fputc('*', bodyOutputFile);
+                  break;
+               case '_':
+                  fputs("\\_", bodyOutputFile);
+                  break;
+               case '!':
+                  fputc('!', bodyOutputFile);
+                  break;
+               case '#':
+                  fputs("\\#", bodyOutputFile);
+                  break;
+               case '.':
+                  fputc('.', bodyOutputFile);
+                  break;
+               case '[':
+                  fputc('[', bodyOutputFile);
+                  break;
+               case ']':
+                  fputc(']', bodyOutputFile);
+                  break;
+               case '<':
+                  fputc('<', bodyOutputFile);
+                  break;
+               case '>':
+                  fputc('>', bodyOutputFile);
+                  break;
+               default:
+                  fprintf(bodyOutputFile, "\\textbackslash %c", string[i]);
+                  break;
+            }
+            break;
+         default:
+            fputc(string[i], bodyOutputFile);
+            break;
+      }
    }
-
-   int lastCharIndex = strlen(string)-1;
-   while (string[lastCharIndex]==' ' || string[lastCharIndex]=='\t')
-   {
-      string[lastCharIndex] = '\0';
-      lastCharIndex = strlen(string)-1;
-   }
+   puts("");
 }
