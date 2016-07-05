@@ -10,15 +10,65 @@
 
 #include "error.h"
 #include "preamble.h"
+#include "usefulFunctions.h"
+#include "pile.h"
 
 #define TMP_OUTPUT_FILENAME "tmpBody.tmp"
 
-STATUS compile(const char* inputFileName, const char* outputFileName);
-void interpretLine(FILE* outputFile, const char* line);
+#define MD_WARNING(lineNb, msg)  if (lineNb <= 0) \
+                                    printf("WARNING (no line specified) :\n\t%s\n", msg); \
+                                 else \
+                                    printf("WARNING (line %d) :\n\t%s\n", lineNb, msg);
+#define MD_ERROR(lineNb, msg)  if (lineNb <= 0) \
+                                    printf("ERROR (no line specified) :\n\t%s\n", msg); \
+                                 else \
+                                    printf("ERROR (line %d) :\n\t%s\n", lineNb, msg);
 
+/*
+ * Opens and closes files and create temporary file.
+ * Deletes temporary file.
+ * Calls translateLineByLine and insertPreamble
+ * @return :   RETURN_SUCCESS if everything worked fine
+ *             RETURN_FAILURE if there was a problem with files or translation
+ */
+STATUS compile(const char* inputFileName, const char* outputFileName);
+/*
+ * Translates each line of the input file to bodyOutputFile
+ */
+void translateLineByLine(FILE* bodyOutputFile);
+/*
+ * Translate the line to bodyOutputFile
+ * If there's need to interpret several lines at once, it calls getNextLineFromFile
+ */
+void interpretLine(FILE* bodyOutputFile, const char* line);
+
+/*
+ * @return :   a string containing the next unread line of the input file
+ *             NULL if the input file as been entirely read
+ * @post : the string return MUST be freed
+ */
 char* getNextLineFromFile();
 
+/*
+ * @return :   a string containing the name of the temporary file and its path if the program was run from another directory
+ * @post : the string returned MUSt be freed
+ */
 char* getTmpFileName(const char* outputFileName);
+/*
+ * Deletes the file with path filePath
+ * @return :   RETURN_SUCCESS if everything worked fine
+ *             RETURN_FAILURE if the file couldn't be deleted
+ */
 STATUS deleteFile(const char* filePath);
+
+/*
+ * @return :   a string containing the useful part of a line containing the name of a new section
+ *                (thus comments, spaces and hashtags are remmoved)
+ *             NULL if the line is not a title line
+ * @post : the string returned MUST be freed
+ */
+char* getTitleOfPart(const char* line);
+
+void translateString(const char* source, char** destination);
 
 #endif //_COMPILER_H_

@@ -41,7 +41,7 @@ void addLineToTitle(const char* newLine)
       }
       else
       {
-         reallocate(&(preamble.title), strlen(preamble.title)+strlen(newLine)+4);
+         reallocate(&(preamble.title), strlen(preamble.title)+strlen(newLine)+4);//TODO check 4 (3?)
          sprintf(preamble.title, "%s\\\\%s", preamble.title, newLine);
       }
    }
@@ -97,6 +97,7 @@ int insertPreamble(FILE* tmpBodyOutputFile, FILE* outputFile)
       fprintf(outputFile, "\\title{%s}\n", preamble.title);
    else
       fputs("\\title{}\n", outputFile);
+   fputs("\\author{}\n", outputFile);
    fputs("\\date{}\n", outputFile);
 
    if (preamble.titleComments != NULL)

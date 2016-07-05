@@ -4,8 +4,6 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "error.h"
-
 typedef enum
 {
    NORMAL, ITALIC, BOLD, UNDERLINE, STRIKETHROUGH, EMPHASIZED, QUOTE, PLAIN_TEXT

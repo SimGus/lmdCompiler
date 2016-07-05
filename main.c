@@ -57,7 +57,7 @@ void replaceExtension(char* string)
 	if (length <= 3)
 	{
 		char msg[256] = "Couldn't replace .lmd extension with .tex : output file name is";
-		snprintf(msg, 256-strlen(msg), "%s %s", msg, string);
+		snprintf(msg, 256, "%s %s", msg, string);
 		WARNING_FUNC("replaceExtension", msg);
 		return;
 	}
