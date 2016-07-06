@@ -147,7 +147,7 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
 
          nbAlinea = 5;
       }
-      else//paragraph
+      else if (line[6] != '#')//paragraph
       {
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}%s\n", translatedTitle, &line[commentIndex]);
@@ -155,6 +155,15 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
             fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}\n", translatedTitle);
 
          nbAlinea = 6;
+      }
+      else//subparagraph
+      {
+         if (commentIndex >= 0)
+            fprintf(bodyOutputFile, "\t\t\t\t\t\t\\subparagraph{%s}%s\n", translatedTitle, &line[commentIndex]);
+         else
+            fprintf(bodyOutputFile, "\t\t\t\t\t\t\\subparagraph{%s}\n", translatedTitle);
+
+         nbAlinea = 7;
       }
 
       free(partTitle);
