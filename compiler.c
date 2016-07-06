@@ -162,7 +162,30 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else if (isMultilinePlainTextOpeningTag(line))
    {
+      char* nextLine = getNextLineFromFile();
+      currentLineNb++;
+      printf("nextLine#1 : %s\n", nextLine);
 
+      fputs("\\begin{verbatim}\n", bodyOutputFile);
+      while (!isMultilinePlainTextClosingTag(nextLine))
+      {
+         int firstUsefulPartIndex;
+         for (firstUsefulPartIndex=0; nextLine[firstUsefulPartIndex]==' '||nextLine[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+            ;//remove alinea
+
+         for (int i=firstUsefulPartIndex; nextLine[i]!='\0'; i++)
+            fputc(nextLine[i], bodyOutputFile);
+         fputc('\n', bodyOutputFile);
+
+         free(nextLine);
+         nextLine = getNextLineFromFile();
+         currentLineNb++;
+         if (nextLine == NULL)
+            break;
+      }
+      if (nextLine != NULL)
+         free(nextLine);
+      fputs("\\end{verbatim}\n", bodyOutputFile);
    }
    else
    {
@@ -302,8 +325,24 @@ bool isMultilinePlainTextOpeningTag(const char* line)
    if (line[firstUsefulPartIndex]!='[')
       return false;
 
-   if (currentLineNb==37)
-      puts("test");
+   int i;
+   for (i=firstUsefulPartIndex+1; line[i]==' ' || line[i]=='\t'; i++)
+      ;
+
+   if (line[i]!='\0' && line[i]!='%')
+      return false;
+
+   return true;
+}
+
+bool isMultilinePlainTextClosingTag(const char* line)
+{
+   int firstUsefulPartIndex;
+   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+      ;
+
+   if (line[firstUsefulPartIndex]!=']')
+      return false;
 
    int i;
    for (i=firstUsefulPartIndex+1; line[i]==' ' || line[i]=='\t'; i++)
@@ -547,7 +586,6 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
    {
       if (getTop(&environments) == PLAIN_TEXT)
       {
-         printf("%c", string[i]);
          if (string[i] == ']')//closr PLAIN_TEXT environment
          {
             fputc('?', bodyOutputFile);

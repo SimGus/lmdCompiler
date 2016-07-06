@@ -88,6 +88,11 @@ void removeUselessSpaces(char* string);
 bool isMultilinePlainTextOpeningTag(const char* line);
 
 /*
+ * same than the function described right above but for closgin tag ']'
+ */
+bool isMultilinePlainTextClosingTag(const char* line);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */
