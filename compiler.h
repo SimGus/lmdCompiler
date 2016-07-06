@@ -93,6 +93,41 @@ bool isMultilinePlainTextOpeningTag(const char* line);
 bool isMultilinePlainTextClosingTag(const char* line);
 
 /*
+ * @return :   true if the line is in the form "<img image.png [label] [width:height]>"
+ *             false elsewise
+ */
+bool isImageLine(const char* line);
+
+/*
+ * writes nbAlinea tabulations to file
+ */
+void writeAlinea(FILE* file);
+
+/*
+ * @pre : line must be a valid line characterizing an image file
+ * @return :   the name (or path) of the image
+ *             NULL if there was a problem
+ * @post : the returned value MUST be freed
+ */
+char* pickImageFileName(const char* line);
+
+/*
+ * @pre : line must be a valid line characterizing an image inclusion
+ * @return :   a string containing the caption of the image
+ *             NULL if no label was found
+ * @post : the returned value MUST be freed
+ */
+char* pickImageLabel(const char* line);
+
+/*
+ * @pre : firstURLIndex must be the index in line pointing to the 'h' of "http"
+ * @return :   a string containing the url
+ *             NULL if there was a problem
+ * @post : the string returned MUST be freed
+ */
+char* pickURL(const char* line, int firstURLIndex);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */

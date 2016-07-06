@@ -171,11 +171,13 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else if (isMultilinePlainTextOpeningTag(line))
    {
+      int beginningLineNb = currentLineNb;
+
       char* nextLine = getNextLineFromFile();
       currentLineNb++;
-      printf("nextLine#1 : %s\n", nextLine);
 
       fputs("\\begin{verbatim}\n", bodyOutputFile);
+
       while (!isMultilinePlainTextClosingTag(nextLine))
       {
          int firstUsefulPartIndex;
@@ -194,12 +196,50 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       }
       if (nextLine != NULL)
          free(nextLine);
+      else
+         MD_WARNING(beginningLineNb, "Missing closing tag for multiline plain text (])");
+
       fputs("\\end{verbatim}\n", bodyOutputFile);
+   }
+   else if (isImageLine(line))
+   {
+      addImagesToPreamble();
+
+      writeAlinea(bodyOutputFile);
+      fputs("\\begin{figure}[h!]\n", bodyOutputFile);
+      nbAlinea++;
+
+      writeAlinea(bodyOutputFile);
+      fputs("\\centering\n", bodyOutputFile);
+
+      char* imageFileName = pickImageFileName(line);
+      //TODO check if the image exists
+      if (imageFileName != NULL)
+      {
+         writeAlinea(bodyOutputFile);
+         fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+         free(imageFileName);
+
+         char* label = pickImageLabel(line);
+         if (label != NULL)
+         {
+            writeAlinea(bodyOutputFile);
+            fprintf(bodyOutputFile, "\\caption{%s}\n", label);
+            free(label);
+
+            //TODO sizes
+         }
+      }
+      else
+         MD_WARNING(currentLineNb, "Couldn't include image");
+
+      nbAlinea--;
+      writeAlinea(bodyOutputFile);
+      fputs("\\end{figure}\n\n", bodyOutputFile);
    }
    else
    {
-      for (int i=0; i<nbAlinea; i++)
-         fputc('\t', bodyOutputFile);
+      writeAlinea(bodyOutputFile);
       translateToFile(bodyOutputFile, line);
       fputc('\n', bodyOutputFile);
       fputc('\n', bodyOutputFile);//to have a new line in the pdf document
@@ -361,6 +401,113 @@ bool isMultilinePlainTextClosingTag(const char* line)
       return false;
 
    return true;
+}
+
+bool isImageLine(const char* line)
+{
+   int firstUsefulPartIndex;
+   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' '||line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+      ;
+
+   //if line begins in <img
+   return (line[firstUsefulPartIndex]=='<' && line[firstUsefulPartIndex+1]=='i' && line[firstUsefulPartIndex+2]=='m' && line[firstUsefulPartIndex+3]=='g');
+}
+
+void writeAlinea(FILE* file)
+{
+   for (int i=0; i<nbAlinea; i++)
+      fputc('\t', file);
+}
+
+char* pickImageFileName(const char* line)
+{
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   int firstUsefulPartIndex;
+   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+      ;
+
+   int firstNameIndex;
+   for (firstNameIndex=firstUsefulPartIndex+4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
+      ;
+
+   if (firstNameIndex == firstUsefulPartIndex+4)
+   {
+      MD_ERROR(currentLineNb, "This line isn't a valid line characterizing the inclusion of an image\nWrite '\\<' instead of '<' if it isn't supposed to include an image");
+      free(tmp);
+      return NULL;
+   }
+
+   int iDest=0;
+   for (int i=firstNameIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+      tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
+
+   char* imageFileName = malloc( (strlen(tmp)+1)*sizeof(char) )   ;
+   strcpy(imageFileName, tmp);
+   free(tmp);
+
+   return imageFileName;
+}
+
+char* pickImageLabel(const char* line)
+{
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   int firstUsefulPartIndex;
+   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+      ;
+
+   int firstNameIndex;
+   for (firstNameIndex=firstUsefulPartIndex+4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
+      ;
+
+   int lastNameIndex;
+   for (lastNameIndex=firstNameIndex; line[lastNameIndex]!='>' && line[lastNameIndex]!=' ' && line[lastNameIndex]!='\t' && line[lastNameIndex]!='\0'; lastNameIndex++)
+      ;
+
+   if (line[lastNameIndex]=='>')
+      return NULL;
+   if (line[lastNameIndex]=='\0')
+   {
+      MD_WARNING(currentLineNb, "Missing closing tag for image inclusion (>)");
+      return NULL;
+   }
+
+   int firstLabelIndex;
+   for (firstLabelIndex=lastNameIndex; line[firstLabelIndex]==' '||line[firstLabelIndex]=='\t'; firstLabelIndex++)
+      ;
+
+   int iDest;
+   for (int i=firstLabelIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+      tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
+
+   char* label = malloc( (strlen(tmp)+1)*sizeof(char) );
+   strcpy(label, tmp);
+   free(tmp);
+
+   return label;
+}
+
+char* pickURL(const char* line, int firstURLIndex)
+{
+   if (line[firstURLIndex]!='h')
+   {
+      MD_ERROR(currentLineNb, "There is an invalid link in this line\nIf it is not supposed to be a link, write '\\<' instead of '<'");
+      return NULL;
+   }
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   int iDest = 0;
+   for (int i=firstURLIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+      tmp[iDest] = line[i];
+
+   char* url = malloc( (strlen(tmp)+1)*sizeof(char) );
+   strcpy(url, tmp);
+   free(tmp);
+
+   return url;
 }
 
 void translateString(const char* source, char** destination)
@@ -763,7 +910,28 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                }
                break;
             case '<':
-               fputs("\\textless ", bodyOutputFile);
+               if (string[i+1]=='h' && string[i+2]=='t' && string[i+3]=='t' && string[i+4]=='p')//if it begins in "<http"
+               {
+                  addLinksToPreamble();
+
+                  char* url = pickURL(string, i+1);
+                  if (url == NULL)
+                  {
+                     MD_WARNING(currentLineNb, "Couldn't insert hyperlink");
+                     while (string[i]!='>' && string[i]!='\0')
+                        i++;
+                  }
+                  else
+                  {
+                     fprintf(bodyOutputFile, "\\url{%s}", url);
+                     free(url);
+
+                     while (string[i]!='>' && string[i]!='\0')
+                        i++;
+                  }
+               }
+               else
+                  fputs("\\textless ", bodyOutputFile);
                break;
             case '[':
                //open PLAIN_TEXT environment
@@ -774,6 +942,40 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                fputc(string[i], bodyOutputFile);
                break;
          }
+      }
+   }
+
+   while (getTop(&environments) != NORMAL)
+   {
+      Environment popped = pilePop(&environments);
+      switch (popped)
+      {
+         case ITALIC:
+            MD_WARNING(currentLineNb, "Missing closing tag for italic environment (*)");
+            fputc('}', bodyOutputFile);
+            break;
+         case BOLD:
+            MD_WARNING(currentLineNb, "Missing closing tag for bold environment (**)");
+            fputc('}', bodyOutputFile);
+            break;
+         case UNDERLINE:
+            MD_WARNING(currentLineNb, "Missing closing tag for underline environment (_)");
+            fputc('}', bodyOutputFile);
+            break;
+         case STRIKETHROUGH:
+            MD_WARNING(currentLineNb, "Missing closing tag for strikethroughed environment (~)");
+            fputc('}', bodyOutputFile);
+            break;
+         case EMPHASIZED:
+            MD_WARNING(currentLineNb, "Missing closing tag for emphasized environment (!!)");
+            fputc('}', bodyOutputFile);
+            break;
+         case PLAIN_TEXT:
+            MD_WARNING(currentLineNb, "Missing closing tag for plain text (])");
+            fputc('?', bodyOutputFile);
+            break;
+         default://QUOTE environment can be unclosed
+            break;
       }
    }
 
