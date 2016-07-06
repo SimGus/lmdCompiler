@@ -160,21 +160,12 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       free(partTitle);
       free(translatedTitle);
    }
-   else if (line[0] == '[')
+   else if (isMultilinePlainTextOpeningTag(line))
    {
 
    }
    else
    {
-      /*char* translatedLine = NULL;
-      translateString(line, &translatedLine);
-      printf("line : '%s'\n", line);
-      printf("translated : '%s'\n", translatedLine);
-      fputs(translatedLine, bodyOutputFile);
-      fprintf(bodyOutputFile, "\n\n");
-
-      free(translatedLine);*/
-
       for (int i=0; i<nbAlinea; i++)
          fputc('\t', bodyOutputFile);
       translateToFile(bodyOutputFile, line);
@@ -300,6 +291,28 @@ void removeUselessSpaces(char* string)
       string[lastCharIndex] = '\0';
       lastCharIndex = strlen(string)-1;
    }
+}
+
+bool isMultilinePlainTextOpeningTag(const char* line)
+{
+   int firstUsefulPartIndex;
+   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
+      ;
+
+   if (line[firstUsefulPartIndex]!='[')
+      return false;
+
+   if (currentLineNb==37)
+      puts("test");
+
+   int i;
+   for (i=firstUsefulPartIndex+1; line[i]==' ' || line[i]=='\t'; i++)
+      ;
+
+   if (line[i]!='\0' && line[i]!='%')
+      return false;
+
+   return true;
 }
 
 void translateString(const char* source, char** destination)
@@ -527,81 +540,195 @@ void translateString(const char* source, char** destination)
 
 void translateToFile(FILE* bodyOutputFile, const char* string)
 {
+   Pile environments;
+   environments.top = NULL;
+
    for (int i=0; string[i]!='\0'; i++)
    {
-      printf("%c", string[i]);
-      switch (string[i])
+      if (getTop(&environments) == PLAIN_TEXT)
       {
-         case '$':
-            fputs("\\$", bodyOutputFile);
-            break;
-         case '{':
-            fputs("\\{", bodyOutputFile);
-            break;
-         case '}':
-            fputs("\\}", bodyOutputFile);
-            break;
-         case '&':
-            fputs("\\&", bodyOutputFile);
-            break;
-         case '.':
-            if (string[i+1]=='.' && string[i+2]=='.')//TODO check we're not out of the string
-            {
-               i += 2;
-               fputs("\\dots ", bodyOutputFile);
-            }
-            else
-               fputc('.', bodyOutputFile);
-            break;
-         case '\\':
-            i++;
-            switch (string[i])
-            {
-               case '\\':
-                  fputs("\\textbackslash ", bodyOutputFile);
-                  break;
-               case '~':
-                  fputs("$\\sim$", bodyOutputFile);
-                  break;
-               case '%':
-                  fputs("\\%%", bodyOutputFile);
-                  break;
-               case '*':
-                  fputc('*', bodyOutputFile);
-                  break;
-               case '_':
-                  fputs("\\_", bodyOutputFile);
-                  break;
-               case '!':
-                  fputc('!', bodyOutputFile);
-                  break;
-               case '#':
-                  fputs("\\#", bodyOutputFile);
-                  break;
-               case '.':
-                  fputc('.', bodyOutputFile);
-                  break;
-               case '[':
-                  fputc('[', bodyOutputFile);
-                  break;
-               case ']':
-                  fputc(']', bodyOutputFile);
-                  break;
-               case '<':
-                  fputc('<', bodyOutputFile);
-                  break;
-               case '>':
-                  fputc('>', bodyOutputFile);
-                  break;
-               default:
-                  fprintf(bodyOutputFile, "\\textbackslash %c", string[i]);
-                  break;
-            }
-            break;
-         default:
+         printf("%c", string[i]);
+         if (string[i] == ']')//closr PLAIN_TEXT environment
+         {
+            fputc('?', bodyOutputFile);
+            pilePop(&environments);
+         }
+         else
             fputc(string[i], bodyOutputFile);
-            break;
+      }
+      else
+      {
+         switch (string[i])
+         {
+            case '$':
+               fputs("\\$", bodyOutputFile);
+               break;
+            case '{':
+               fputs("\\{", bodyOutputFile);
+               break;
+            case '}':
+               fputs("\\}", bodyOutputFile);
+               break;
+            case '&':
+               fputs("\\&", bodyOutputFile);
+               break;
+            case '-':
+               fputs("\\textendash ", bodyOutputFile);
+               break;
+            case '.':
+               if (string[i+1]=='.' && string[i+2]=='.')//TODO check we're not out of the string
+               {
+                  i += 2;
+                  fputs("\\dots ", bodyOutputFile);
+               }
+               else
+                  fputc('.', bodyOutputFile);
+               break;
+            case '\\':
+               i++;
+               switch (string[i])
+               {
+                  case '\\':
+                     fputs("\\textbackslash ", bodyOutputFile);
+                     break;
+                  case '~':
+                     fputs("$\\sim$", bodyOutputFile);
+                     break;
+                  case '%':
+                     fputs("\\%%", bodyOutputFile);
+                     break;
+                  case '*':
+                     fputc('*', bodyOutputFile);
+                     break;
+                  case '_':
+                     fputs("\\_", bodyOutputFile);
+                     break;
+                  case '!':
+                     fputc('!', bodyOutputFile);
+                     break;
+                  case '#':
+                     fputs("\\#", bodyOutputFile);
+                     break;
+                  case '.':
+                     fputc('.', bodyOutputFile);
+                     break;
+                  case '[':
+                     fputc('[', bodyOutputFile);
+                     break;
+                  case ']':
+                     fputc(']', bodyOutputFile);
+                     break;
+                  case '<':
+                     fputc('<', bodyOutputFile);
+                     break;
+                  case '>':
+                     fputc('>', bodyOutputFile);
+                     break;
+                  default:
+                     fprintf(bodyOutputFile, "\\textbackslash %c", string[i]);
+                     break;
+               }
+               break;
+            case '*':
+               if (string[i+1] != '*')//ITALIC
+               {
+                  if (getTop(&environments) == ITALIC)//close ITALIC environment
+                  {
+                     fputc('}', bodyOutputFile);
+                     pilePop(&environments);
+                  }
+                  else//open ITALIC environment
+                  {
+                     fputs("\\textit{", bodyOutputFile);
+                     pilePush(&environments, ITALIC);
+                  }
+               }
+               else//BOLD
+               {
+                  i++;
+                  if (getTop(&environments) == BOLD)//close BOLD environment
+                  {
+                     fputc('}', bodyOutputFile);
+                     pilePop(&environments);
+                  }
+                  else//open BOLD environment
+                  {
+                     fputs("\\textbf{", bodyOutputFile);
+                     pilePush(&environments, BOLD);
+                  }
+               }
+               break;
+            case '_':
+               if (getTop(&environments) == UNDERLINE)//close UNDERLINE environment
+               {
+                  fputc('}', bodyOutputFile);
+                  pilePop(&environments);
+               }
+               else//open UNDERLINE environment
+               {
+                  fputs("\\underline{", bodyOutputFile);
+                  pilePush(&environments, UNDERLINE);
+               }
+               break;
+            case '~':
+               if (getTop(&environments) == STRIKETHROUGH)//close STRIKETHROUGH environment
+               {
+                  fputc('}', bodyOutputFile);
+                  pilePop(&environments);
+               }
+               else//open STRIKETHROUGH environment
+               {
+                  addStrikethroughsToPreamble();
+                  fputs("\\sout{", bodyOutputFile);
+                  pilePush(&environments, STRIKETHROUGH);
+               }
+               break;
+            case '!':
+               if (string[i+1] != '!')
+                  fputc('!', bodyOutputFile);
+               else if (getTop(&environments) == EMPHASIZED)//close EMPHASIZED environment
+               {
+                  i++;
+                  fputc('}', bodyOutputFile);
+                  pilePop(&environments);
+               }
+               else//open EMPHASIZED environment
+               {
+                  i++;
+                  fputs("\\emph{", bodyOutputFile);
+                  pilePush(&environments, EMPHASIZED);
+               }
+               break;
+            case '>':
+               if (string[i+1] != '>')
+                  fputs("\\textgreater ", bodyOutputFile);
+               else if (getTop(&environments) == QUOTE)//close QUOTE environment
+               {
+                  i++;
+                  fputc('}', bodyOutputFile);
+                  pilePop(&environments);
+               }
+               else//open QUOTE environment
+               {
+                  i++;
+                  fputs("\\textrm{", bodyOutputFile);
+                  pilePush(&environments, QUOTE);
+               }
+               break;
+            case '<':
+               fputs("\\textless ", bodyOutputFile);
+               break;
+            case '[':
+               //open PLAIN_TEXT environment
+               fputs("\\verb?", bodyOutputFile);
+               pilePush(&environments, PLAIN_TEXT);
+               break;
+            default:
+               fputc(string[i], bodyOutputFile);
+               break;
+         }
       }
    }
-   puts("");
+
+   pileFree(&environments);
 }

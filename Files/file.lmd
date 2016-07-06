@@ -32,7 +32,7 @@
 	<img image.png label w:h>
 	<http://link.com>
 	<http://link.com/ label>
-	[Plain text]
+	[Plain text % $ #include<stdlib.h> int main(){return EXIT_SUCCESS;}]
 	
 	[
 	Plain text
@@ -69,3 +69,5 @@
 #####Subsubsection
 ###### Paragraphe %avec commentaire
 	Avec quelque chose dedans
+#######Sous-paragraphe%com
+	Test

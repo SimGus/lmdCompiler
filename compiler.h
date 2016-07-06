@@ -82,6 +82,12 @@ int getFirstIndexOfComment(const char* line);
 void removeUselessSpaces(char* string);
 
 /*
+ * @return :   true if the useful part of line is a '['
+ *             false if it isn't
+ */
+bool isMultilinePlainTextOpeningTag(const char* line);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */
