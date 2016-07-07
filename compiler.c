@@ -492,6 +492,12 @@ char* pickImageLabel(const char* line)
 
 char* pickURL(const char* line, int firstURLIndex)
 {
+   if (firstURLIndex <= 0)
+   {
+      WARNING_FUNC("pickURL", "Wrong index specified");
+      return NULL;
+   }
+
    if (line[firstURLIndex]!='h')
    {
       MD_ERROR(currentLineNb, "There is an invalid link in this line\nIf it is not supposed to be a link, write '\\<' instead of '<'");
@@ -502,12 +508,60 @@ char* pickURL(const char* line, int firstURLIndex)
    int iDest = 0;
    for (int i=firstURLIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
       tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
 
    char* url = malloc( (strlen(tmp)+1)*sizeof(char) );
    strcpy(url, tmp);
    free(tmp);
 
    return url;
+}
+
+char* pickURLLabel(const char* line, int firstURLIndex)
+{
+   if (firstURLIndex <= 0)
+   {
+      WARNING_FUNC("pickURLLabel", "Wrong index specified");
+      return NULL;
+   }
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   int firstSpaceIndex;
+   for (firstSpaceIndex=firstURLIndex; line[firstSpaceIndex]!='>' && line[firstSpaceIndex]!=' ' && line[firstSpaceIndex]!='\t' && line[firstSpaceIndex]!='\0'; firstSpaceIndex++)
+      ;
+
+   if (line[firstSpaceIndex]=='\0')
+   {
+      MD_ERROR(currentLineNb, "Missing closing tag for hyperlink (>)");
+      free(tmp);
+      return NULL;
+   }
+   if (line[firstSpaceIndex]=='>')
+   {
+      free(tmp);
+      return NULL;
+   }
+   //line[firstSpaceIndex]==' ' || line[firstSpaceIndex]=='\t'
+   int firstLabelIndex;
+   for (firstLabelIndex=firstSpaceIndex; line[firstLabelIndex]==' ' || line[firstLabelIndex]=='\t'; firstLabelIndex++)
+      ;
+
+   int i, iDest = 0;
+   for (i=firstLabelIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+      tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
+
+   if (line[i] == '\0')
+   {
+      MD_WARNING(currentLineNb, "Missing closing tag for hyperlink (>)");
+   }
+
+   char* label = malloc( (strlen(tmp)+1)*sizeof(char) );
+   strcpy(label, tmp);
+   free(tmp);
+
+   return label;
 }
 
 void translateString(const char* source, char** destination)
@@ -923,7 +977,14 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                   }
                   else
                   {
-                     fprintf(bodyOutputFile, "\\url{%s}", url);
+                     char* urlLabel = pickURLLabel(string, i+1);
+                     if (urlLabel == NULL)//no label
+                        fprintf(bodyOutputFile, "\\url{%s}", url);
+                     else//label
+                     {
+                        fprintf(bodyOutputFile, "\\href{%s}{%s}", url, urlLabel);
+                        free(urlLabel);
+                     }
                      free(url);
 
                      while (string[i]!='>' && string[i]!='\0')

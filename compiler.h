@@ -128,6 +128,14 @@ char* pickImageLabel(const char* line);
 char* pickURL(const char* line, int firstURLIndex);
 
 /*
+ * @pre : firstURLIndex must be the index in line pointing to the 'h' of "http"
+ * @return :   a string containing the label that will link to the url
+ *             NULL if no label was found
+ * @post : the string (not NULL) returned MUST be freed
+ */
+char* pickURLLabel(const char* line, int firstURLIndex);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */
