@@ -94,7 +94,7 @@ bool isMultilinePlainTextClosingTag(const char* line);
 
 /*
  * @return :   true if the line is in the form "<img image.png [label] [width:height]>"
- *             false elsewise
+ *             false otherwise
  */
 bool isImageLine(const char* line);
 
@@ -134,6 +134,19 @@ char* pickURL(const char* line, int firstURLIndex);
  * @post : the string (not NULL) returned MUST be freed
  */
 char* pickURLLabel(const char* line, int firstURLIndex);
+
+/*
+ * @return :   true if the line begins in "+ " or "+\t"
+ *             false otherwise
+ */
+bool isItemizeLine(const char* line);
+
+/*
+ * @return :   a string containing an item from a list
+ *             NULL if there was a problem
+ * @post : the string returned MUST be freed
+ */
+char* pickItemFromItemize(const char* line);
 
 /*
  * Translates source (in markdown) to destination (in LaTeX)

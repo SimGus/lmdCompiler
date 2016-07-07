@@ -237,6 +237,54 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       writeAlinea(bodyOutputFile);
       fputs("\\end{figure}\n\n", bodyOutputFile);
    }
+   else if (isItemizeLine(line))
+   {
+      addEnumToPreamble();
+      writeAlinea(bodyOutputFile);
+      fputs("\\begin{itemize}[label=$\\bullet$]\n", bodyOutputFile);
+      nbAlinea++;
+
+      writeAlinea(bodyOutputFile);
+      fputs("\\item\n", bodyOutputFile);
+
+      char* item = pickItemFromItemize(line);
+      writeAlinea(bodyOutputFile);
+      fprintf(bodyOutputFile, "\t%s\n", item);
+      free(item);
+
+      char* nextLine = getNextLineFromFile();
+      currentLineNb++;
+      while (nextLine != NULL && isItemizeLine(nextLine))
+      {
+         writeAlinea(bodyOutputFile);
+         fputs("\\item\n", bodyOutputFile);
+
+         item = pickItemFromItemize(nextLine);
+         writeAlinea(bodyOutputFile);
+         fprintf(bodyOutputFile, "\t%s\n", item);
+         free(item);
+
+         //printf("cursor : %ld\n", ftell(bodyOutputFile));
+
+         free(nextLine);
+         nextLine = getNextLineFromFile();
+         currentLineNb++;
+      }
+
+      nbAlinea--;
+      writeAlinea(bodyOutputFile);
+      fputs("\\end{itemize}\n\n", bodyOutputFile);
+
+      if (nextLine != NULL)
+      {
+         //put cursor back to beginning of line
+         //printf("size : %d\t->cursor : %ld\n", strlen(nextLine)+1, ftell(bodyOutputFile));
+         fseek(inputFile, -(strlen(nextLine)+1), SEEK_CUR);
+         currentLineNb--;
+         //printf("cursor : %ld\n\n", ftell(bodyOutputFile));
+         free(nextLine);
+      }
+   }
    else
    {
       writeAlinea(bodyOutputFile);
@@ -562,6 +610,46 @@ char* pickURLLabel(const char* line, int firstURLIndex)
    free(tmp);
 
    return label;
+}
+
+bool isItemizeLine(const char* line)
+{
+   int firstNonSpaceIndex;
+   for (firstNonSpaceIndex=0; line[firstNonSpaceIndex]==' ' || line[firstNonSpaceIndex]=='\t'; firstNonSpaceIndex++)
+      ;
+
+   if (line[firstNonSpaceIndex]=='+')
+      return (line[firstNonSpaceIndex+1]==' ' || line[firstNonSpaceIndex+1]=='\t');
+   return false;
+}
+
+char* pickItemFromItemize(const char* line)
+{
+   int firstNonSpaceIndex;
+   for (firstNonSpaceIndex=0; line[firstNonSpaceIndex]==' ' || line[firstNonSpaceIndex]=='\t'; firstNonSpaceIndex++)
+      ;
+
+   if (line[firstNonSpaceIndex]!='+')
+   {
+      MD_ERROR(currentLineNb, "There was a problem reading this enumeration, the line must begin with '+'");
+      return NULL;
+   }
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   int firstItemIndex;
+   for (firstItemIndex=firstNonSpaceIndex+1; line[firstItemIndex]==' ' || line[firstItemIndex]=='\t'; firstItemIndex++)
+      ;
+
+   int iDest = 0;
+   for (int i=firstItemIndex; line[i]!='\0'; i++, iDest++)
+      tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
+
+   char* item = malloc( (strlen(tmp)+1)*sizeof(char) );
+   strcpy(item, tmp);
+   free(tmp);
+   return item;
 }
 
 void translateString(const char* source, char** destination)
