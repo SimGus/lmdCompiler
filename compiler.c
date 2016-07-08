@@ -632,10 +632,7 @@ void writeItemize(FILE* bodyOutputFile, const char* line)
    fputs("\\begin{itemize}[label=$\\bullet$]\n", bodyOutputFile);
    nbAlinea++;
 
-   char* item = pickItemFromItemize(line);
-   writeAlinea(bodyOutputFile);
-   fprintf(bodyOutputFile, "\\item %s\n", item);
-   free(item);
+   writeItemizeItem(bodyOutputFile, line);
 
    char* nextLine = getNextLineFromFile();
    currentLineNb++;
@@ -644,12 +641,7 @@ void writeItemize(FILE* bodyOutputFile, const char* line)
       inputIndentationNb = getIndentation(nextLine);
 
       if (inputIndentationNb == itemizeIndentation)
-      {
-         item = pickItemFromItemize(nextLine);
-         writeAlinea(bodyOutputFile);
-         fprintf(bodyOutputFile, "\\item %s\n", item);
-         free(item);
-      }
+         writeItemizeItem(bodyOutputFile, nextLine);
       else if (inputIndentationNb > itemizeIndentation)
       {
          nbAlinea++;
@@ -675,6 +667,16 @@ void writeItemize(FILE* bodyOutputFile, const char* line)
       currentLineNb--;
       free(nextLine);
    }
+}
+
+void writeItemizeItem(FILE* bodyOutputFile, const char* line)
+{
+   char* item = pickItemFromItemize(line);
+   if (item == NULL)
+      return;
+   writeAlinea(bodyOutputFile);
+   fprintf(bodyOutputFile, "\\item %s\n", item);
+   free(item);
 }
 
 bool isEnumLine(const char* line)
@@ -708,9 +710,7 @@ void writeEnumerate(FILE* bodyOutputFile, const char* line)
       inputIndentationNb = getIndentation(nextLine);
 
       if (inputIndentationNb == enumerateIndentation)
-      {
          writeEnumerateItem(bodyOutputFile, nextLine);
-      }
       else if (inputIndentationNb > enumerateIndentation)
       {
          nbAlinea++;

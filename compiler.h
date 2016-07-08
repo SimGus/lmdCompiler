@@ -149,7 +149,6 @@ bool isItemizeLine(const char* line);
 char* pickItemFromItemize(const char* line);
 
 /*
- * Used for enumartions
  * @return : number of spaces at the beginning of the line
  */
 short getIndentation(const char* line);
@@ -159,6 +158,12 @@ short getIndentation(const char* line);
  * @pre : line must be an itemize line
  */
 void writeItemize(FILE* bodyOutputFile, const char* line);
+
+/*
+ * Writes line as an itemize item in bodyOutputFile
+ * @pre : line MUST be an itemize line (see above)
+ */
+void writeItemizeItem(FILE* bodyOutputFile, const char* line);
 
 /*
  * @return :   true if the line begins in form "l. " or "l.\t"
