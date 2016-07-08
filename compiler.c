@@ -1,8 +1,9 @@
 #include "compiler.h"
 
 FILE* inputFile = NULL;
-int currentLineNb = 0;
+unsigned int currentLineNb = 0;
 char nbAlinea = 0;
+unsigned char inputIndentationNb = 0;
 
 STATUS compile(const char* inputFileName, const char* outputFileName)
 {
@@ -79,13 +80,11 @@ void translateLineByLine(FILE* bodyOutputFile)
    fputs("\\maketitle\n\n", bodyOutputFile);
 
    char* line;
-   int firstNonSpaceIndex;
    while ((line = getNextLineFromFile()) != NULL)
    {
       currentLineNb++;
-      for (firstNonSpaceIndex=0; line[firstNonSpaceIndex]==' ' || line[firstNonSpaceIndex]=='\t'; firstNonSpaceIndex++)
-         ;//remove alinea
-      interpretLine(bodyOutputFile, &line[firstNonSpaceIndex]);
+      inputIndentationNb = getIndentation(line);
+      interpretLine(bodyOutputFile, &line[inputIndentationNb]);
       free(line);
    }
 
@@ -94,6 +93,8 @@ void translateLineByLine(FILE* bodyOutputFile)
 
 void interpretLine(FILE* bodyOutputFile, const char* line)
 {
+   char enumBeginningChar = '\0';
+
    if (line[0] == '#')
    {
       char* partTitle = getTitleOfPart(line);
@@ -240,50 +241,13 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
    else if (isItemizeLine(line))
    {
       addEnumToPreamble();
-      writeAlinea(bodyOutputFile);
-      fputs("\\begin{itemize}[label=$\\bullet$]\n", bodyOutputFile);
-      nbAlinea++;
-
-      writeAlinea(bodyOutputFile);
-      fputs("\\item\n", bodyOutputFile);
-
-      char* item = pickItemFromItemize(line);
-      writeAlinea(bodyOutputFile);
-      fprintf(bodyOutputFile, "\t%s\n", item);
-      free(item);
-
-      char* nextLine = getNextLineFromFile();
-      currentLineNb++;
-      while (nextLine != NULL && isItemizeLine(nextLine))
-      {
-         writeAlinea(bodyOutputFile);
-         fputs("\\item\n", bodyOutputFile);
-
-         item = pickItemFromItemize(nextLine);
-         writeAlinea(bodyOutputFile);
-         fprintf(bodyOutputFile, "\t%s\n", item);
-         free(item);
-
-         //printf("cursor : %ld\n", ftell(bodyOutputFile));
-
-         free(nextLine);
-         nextLine = getNextLineFromFile();
-         currentLineNb++;
-      }
-
-      nbAlinea--;
-      writeAlinea(bodyOutputFile);
-      fputs("\\end{itemize}\n\n", bodyOutputFile);
-
-      if (nextLine != NULL)
-      {
-         //put cursor back to beginning of line
-         //printf("size : %d\t->cursor : %ld\n", strlen(nextLine)+1, ftell(bodyOutputFile));
-         fseek(inputFile, -(strlen(nextLine)+1), SEEK_CUR);
-         currentLineNb--;
-         //printf("cursor : %ld\n\n", ftell(bodyOutputFile));
-         free(nextLine);
-      }
+      writeItemize(bodyOutputFile, line);
+      fputc('\n', bodyOutputFile);
+   }
+   else if ((enumBeginningChar = isFirstEnumLine(line)) != '\0')
+   {
+      addEnumToPreamble();
+      fprintf(bodyOutputFile, "enum : %c\n", enumBeginningChar);
    }
    else
    {
@@ -650,6 +614,107 @@ char* pickItemFromItemize(const char* line)
    strcpy(item, tmp);
    free(tmp);
    return item;
+}
+
+short getIndentation(const char* line)
+{
+   int nbFirstSpaces;
+   for (nbFirstSpaces=0; line[nbFirstSpaces]==' ' || line[nbFirstSpaces]=='\t'; nbFirstSpaces++)
+      ;
+
+   return nbFirstSpaces;
+}
+
+void writeItemize(FILE* bodyOutputFile, const char* line)
+{
+   int itemizeIndentation = inputIndentationNb;
+
+   writeAlinea(bodyOutputFile);
+   fputs("\\begin{itemize}[label=$\\bullet$]\n", bodyOutputFile);
+   nbAlinea++;
+
+   char* item = pickItemFromItemize(line);
+   writeAlinea(bodyOutputFile);
+   fprintf(bodyOutputFile, "\\item %s\n", item);
+   free(item);
+
+   char* nextLine = getNextLineFromFile();
+   currentLineNb++;
+   while (nextLine != NULL && isItemizeLine(nextLine))
+   {
+      inputIndentationNb = getIndentation(nextLine);
+
+      if (inputIndentationNb == itemizeIndentation)
+      {
+         item = pickItemFromItemize(nextLine);
+         writeAlinea(bodyOutputFile);
+         fprintf(bodyOutputFile, "\\item %s\n", item);
+         free(item);
+      }
+      else if (inputIndentationNb > itemizeIndentation)
+      {
+         nbAlinea++;
+         writeItemize(bodyOutputFile, nextLine);
+         nbAlinea--;
+      }
+      else
+      {
+         MD_ERROR(currentLineNb, "Wrong indentation for itemizes");
+      }
+
+      free(nextLine);
+      nextLine = getNextLineFromFile();
+      currentLineNb++;
+   }
+
+   nbAlinea--;
+   writeAlinea(bodyOutputFile);
+   fputs("\\end{itemize}\n", bodyOutputFile);
+
+   if (nextLine != NULL)
+   {
+      //put cursor back to beginning of line
+      fseek(inputFile, -(strlen(nextLine)+1), SEEK_CUR);
+      currentLineNb--;
+      free(nextLine);
+   }
+}
+
+char isFirstEnumLine(const char* line)
+{
+   unsigned int firstNonSpaceIndex;
+   for (firstNonSpaceIndex=0; line[firstNonSpaceIndex]==' ' || line[firstNonSpaceIndex]=='\t'; firstNonSpaceIndex++)
+      ;
+
+   if (line[firstNonSpaceIndex]!='1' && line[firstNonSpaceIndex]!='a' && line[firstNonSpaceIndex]!='A' && line[firstNonSpaceIndex]!='I')
+      return '\0';
+
+   if (line[firstNonSpaceIndex+1]!='.')
+      return '\0';
+
+   if (line[firstNonSpaceIndex+2]!=' ' && line[firstNonSpaceIndex+2]!='\t')
+      return '\0';
+
+   return line[firstNonSpaceIndex];
+}
+
+bool isEnumLine(const char* line, char enumChar)
+{
+   unsigned int firstNonSpaceIndex;
+   for (firstNonSpaceIndex=0; line[firstNonSpaceIndex]==' ' || line[firstNonSpaceIndex]=='\t'; firstNonSpaceIndex++)
+      ;
+
+   if (line[firstNonSpaceIndex] != enumChar)
+      return false;
+
+   if (line[firstNonSpaceIndex+1] != '.')
+      return false;
+   return (line[firstNonSpaceIndex+2] == ' ' || line[firstNonSpaceIndex]=='\t');
+}
+
+void writeEnumerate(FILE* bodyOutputFile, const char* line)
+{
+   
 }
 
 void translateString(const char* source, char** destination)

@@ -149,6 +149,36 @@ bool isItemizeLine(const char* line);
 char* pickItemFromItemize(const char* line);
 
 /*
+ * Used for enumartions
+ * @return : number of spaces at the beginning of the line
+ */
+short getIndentation(const char* line);
+
+/*
+ * Detects and writes an itemize to bodyOutputFile
+ * @pre : line must be an itemize line
+ */
+void writeItemize(FILE* bodyOutputFile, const char* line);
+
+/*
+ * @return :   the character beginning the line if it begins in "1. ", "1.\t", "a. ", "a.\t", "A. ", "A.\t", "I. " or "I.\t"
+ *             '\0' otherwise
+ */
+char isFirstEnumLine(const char* line);
+
+/*
+ * @return :   true if the line begins in form "enumChar. " or "enumChar.\t"
+ *             false otherwise
+ */
+bool isEnumLine(const char* line, char enumChar);
+
+/*
+ * Detects and writes an enumerate section to bodyOutputFile
+ * @pre : line MUST be an enumeration line, hence begin in format "nb. " or "nb.\t" (see above)
+ */
+void writeEnumerate(FILE* bodyOutputFile, const char* line);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */
