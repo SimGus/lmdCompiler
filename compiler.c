@@ -227,8 +227,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       {
          if (!imageFileExists(imageFileName))
          {
-            char msg[256];
-            snprintf(msg, 256, "File %s doesn't exist", imageFileName);
+            char msg[512];
+            snprintf(msg, 512, "File %s doesn't exist (%s%s)", imageFileName, workingDirName, imageFileName);
             MD_ERROR(currentLineNb, msg);
             free(imageFileName);
             return RETURN_FAILURE;
@@ -315,23 +315,26 @@ unsigned short getIndentation(const char* line)
    return nbFirstSpaces;
 }
 
-char* getTmpFileName(const char* outputFileName)
+char* getTmpFileName()
 {
+   if (workingDirName == NULL)
+   {
+      ERROR_MSG("getTmpFileName", "Working directory name wasn't set. Impossible to get the tmp file name.");
+      return NULL;
+   }
+
    char* tmpBodyOutputFilePath;
-	char* tmpFileName = malloc( (strlen(outputFileName)+1)*sizeof(char) );
-	strcpy(tmpFileName, outputFileName);
-	if (strcmp(dirname(tmpFileName), ".") == 0)
-	{
-		tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
-		strcpy(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME);
-	}
+   if (strcmp(workingDirName, ".") == 0)
+   {
+      tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
+      strcpy(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME);
+   }
    else
-	{
-		strcpy(tmpFileName, outputFileName);
-		tmpBodyOutputFilePath = malloc( (strlen(outputFileName)+strlen(TMP_OUTPUT_FILENAME))*sizeof(char) );
-		sprintf(tmpBodyOutputFilePath, "%s/%s", dirname(tmpFileName), TMP_OUTPUT_FILENAME);
-	}
-	free(tmpFileName);
+   {
+      tmpBodyOutputFilePath = malloc( (strlen(workingDirName)+strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
+      sprintf(tmpBodyOutputFilePath, "%s%s", workingDirName, TMP_OUTPUT_FILENAME);
+   }
+
    return tmpBodyOutputFilePath;
 }
 

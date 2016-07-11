@@ -55,10 +55,11 @@ char* getNextLineFromFile();
 unsigned short getIndentation(const char* line);
 
 /*
+ * @pre : setWorkingDirectoryName must have been used before (thus workingDirName be set)
  * @return :   a string containing the name of the temporary file and its path if the program was run from another directory
- * @post : the string returned MUSt be freed
+ * @post : the string returned MUST be freed
  */
-char* getTmpFileName(const char* outputFileName);
+char* getTmpFileName();
 
 /*
  * Deletes the file with path filePath
