@@ -40,7 +40,7 @@ void translateLineByLine(FILE* bodyOutputFile);
  * Translate the line to bodyOutputFile
  * If there's need to interpret several lines at once, it calls getNextLineFromFile
  */
-void interpretLine(FILE* bodyOutputFile, const char* line);
+STATUS interpretLine(FILE* bodyOutputFile, const char* line);
 
 /*
  * @return :   a string containing the next unread line of the input file
@@ -59,12 +59,24 @@ unsigned short getIndentation(const char* line);
  * @post : the string returned MUSt be freed
  */
 char* getTmpFileName(const char* outputFileName);
+
 /*
  * Deletes the file with path filePath
  * @return :   RETURN_SUCCESS if everything worked fine
  *             RETURN_FAILURE if the file couldn't be deleted
  */
 STATUS deleteFile(const char* filePath);
+
+/*
+ * Sets global variable workingDirName to the path of the working directory
+ */
+void setWorkingDirectoryName(const char* outputFileName);
+
+/*
+ * @return :   true if the file with path imgFileName exists
+ *             false otherwise
+ */
+bool imageFileExists(const char* imgFileName);
 
 /*
  * @return :   a string containing the useful part of a line containing the name of a new section

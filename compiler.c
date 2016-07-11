@@ -1,5 +1,6 @@
 #include "compiler.h"
 
+char* workingDirName = NULL;
 FILE* inputFile = NULL;
 unsigned int currentLineNb = 0;
 unsigned char nbAlinea = 0;
@@ -8,6 +9,8 @@ unsigned short inputIndentationNb = 0;
 STATUS compile(const char* inputFileName, const char* outputFileName)
 {
    FILE *outputFile = NULL, *tmpBodyOutputFile = NULL;
+
+   setWorkingDirectoryName(outputFileName);
 
    //open input file
    inputFile = fopen(inputFileName, "r");
@@ -27,6 +30,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
       ERROR_MSG("compile", "Couldn't create temporary file");
       fclose(inputFile);
       free(tmpBodyOutputFilePath);
+      free(workingDirName);
       return RETURN_FAILURE;
    }
 
@@ -44,6 +48,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
       fclose(tmpBodyOutputFile);
       deleteFile(tmpBodyOutputFilePath);
       free(tmpBodyOutputFilePath);
+      free(workingDirName);
       return RETURN_FAILURE;
    }
 
@@ -55,6 +60,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
       fclose(tmpBodyOutputFile);
       deleteFile(tmpBodyOutputFilePath);
       free(tmpBodyOutputFilePath);
+      free(workingDirName);
       return RETURN_FAILURE;
    }
 
@@ -67,9 +73,12 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    if (deleteFile(tmpBodyOutputFilePath) != RETURN_SUCCESS)
    {
       free(tmpBodyOutputFilePath);
+      free(workingDirName);
       return RETURN_FAILURE;
    }
    free(tmpBodyOutputFilePath);
+
+   free(workingDirName);
 
    return RETURN_SUCCESS;
 }
@@ -82,14 +91,19 @@ void translateLineByLine(FILE* bodyOutputFile)
    char* line;
    while ((line = getNextLineFromFile()) != NULL)
    {
-      interpretLine(bodyOutputFile, &line[inputIndentationNb]);
+      if (interpretLine(bodyOutputFile, &line[inputIndentationNb]) != RETURN_SUCCESS)
+      {
+         MD_WARNING(-1, "The output file isn't right, DON'T TRY TO COMPILE IT.");
+         free(line);
+         return;
+      }
       free(line);
    }
 
    fputs("\\end{document}\n", bodyOutputFile);
 }
 
-void interpretLine(FILE* bodyOutputFile, const char* line)
+STATUS interpretLine(FILE* bodyOutputFile, const char* line)
 {
    if (line[0] == '#')
    {
@@ -211,6 +225,15 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       //TODO check if the image exists
       if (imageFileName != NULL)
       {
+         if (!imageFileExists(imageFileName))
+         {
+            char msg[256];
+            snprintf(msg, 256, "File %s doesn't exist", imageFileName);
+            MD_ERROR(currentLineNb, msg);
+            free(imageFileName);
+            return RETURN_FAILURE;
+         }
+
          writeAlinea(bodyOutputFile);
          fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
          free(imageFileName);
@@ -251,6 +274,8 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       fputc('\n', bodyOutputFile);
       fputc('\n', bodyOutputFile);//to have a new line in the pdf document
    }
+
+   return RETURN_SUCCESS;
 }
 
 char* getNextLineFromFile()
@@ -320,6 +345,36 @@ STATUS deleteFile(const char* filePath)
       return RETURN_FAILURE;
    }
    return RETURN_SUCCESS;
+}
+
+void setWorkingDirectoryName(const char* outputFileName)
+{
+   char* tmpOutPath = duplicateString(outputFileName);
+   char* directoryName = duplicateString(dirname(tmpOutPath));
+   free(tmpOutPath);
+   if (strcmp(directoryName, ".") == 0)
+   {
+      workingDirName = malloc(2*sizeof(char));
+      strcpy(workingDirName, ".");
+   }
+   else
+   {
+      workingDirName = malloc( (strlen(directoryName+2))*sizeof(char) );
+      sprintf(workingDirName, "%s/", directoryName);
+   }
+}
+
+bool imageFileExists(const char* imgFileName)
+{
+   if (strcmp(workingDirName, ".") == 0)
+      return (access(imgFileName, F_OK) != -1);
+
+   char* imgPath = malloc( (strlen(workingDirName)+strlen(imgFileName)+1)*sizeof(char) );
+   sprintf(imgPath, "%s%s", workingDirName, imgFileName);
+   bool answer = (access(imgPath, F_OK) != -1);
+   free(imgPath);
+
+   return answer;
 }
 
 char* getTitleOfPart(const char* line)
