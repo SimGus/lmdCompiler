@@ -50,6 +50,11 @@ void interpretLine(FILE* bodyOutputFile, const char* line);
 char* getNextLineFromFile();
 
 /*
+ * @return : number of spaces at the beginning of the line
+ */
+unsigned short getIndentation(const char* line);
+
+/*
  * @return :   a string containing the name of the temporary file and its path if the program was run from another directory
  * @post : the string returned MUSt be freed
  */
@@ -125,7 +130,7 @@ char* pickImageLabel(const char* line);
  *             NULL if there was a problem
  * @post : the string returned MUST be freed
  */
-char* pickURL(const char* line, int firstURLIndex);
+char* pickURL(const char* line, unsigned int firstURLIndex);
 
 /*
  * @pre : firstURLIndex must be the index in line pointing to the 'h' of "http"
@@ -133,7 +138,7 @@ char* pickURL(const char* line, int firstURLIndex);
  *             NULL if no label was found
  * @post : the string (not NULL) returned MUST be freed
  */
-char* pickURLLabel(const char* line, int firstURLIndex);
+char* pickURLLabel(const char* line, unsigned int firstURLIndex);
 
 /*
  * @return :   true if the line begins in "+ " or "+\t"
@@ -147,11 +152,6 @@ bool isItemizeLine(const char* line);
  * @post : the string returned MUST be freed
  */
 char* pickItemFromItemize(const char* line);
-
-/*
- * @return : number of spaces at the beginning of the line
- */
-short getIndentation(const char* line);
 
 /*
  * Detects and writes an itemize to bodyOutputFile

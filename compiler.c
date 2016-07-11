@@ -3,7 +3,7 @@
 FILE* inputFile = NULL;
 unsigned int currentLineNb = 0;
 unsigned char nbAlinea = 0;
-unsigned char inputIndentationNb = 0;
+unsigned short inputIndentationNb = 0;
 
 STATUS compile(const char* inputFileName, const char* outputFileName)
 {
@@ -281,6 +281,15 @@ char* getNextLineFromFile()
    return line;
 }
 
+unsigned short getIndentation(const char* line)
+{
+   unsigned short nbFirstSpaces;
+   for (nbFirstSpaces=0; line[nbFirstSpaces]==' ' || line[nbFirstSpaces]=='\t'; nbFirstSpaces++)
+      ;
+
+   return nbFirstSpaces;
+}
+
 char* getTmpFileName(const char* outputFileName)
 {
    char* tmpBodyOutputFilePath;
@@ -360,33 +369,26 @@ int getFirstIndexOfComment(const char* line)
 
 void removeUselessSpaces(char* string)
 {
-   if (string[0] == ' ' || string[0] == '\t')
-   {
-      int i;
-      for (i=0; string[i]==' '||string[i]=='\t'; i++)
-         ;
-      string = &string[i];
-   }
+   if (string[0] == ' ' || string[0] == '\t')//should never be true
+      string = &string[inputIndentationNb];
 
    int lastCharIndex = strlen(string)-1;
    while (string[lastCharIndex]==' ' || string[lastCharIndex]=='\t')
    {
       string[lastCharIndex] = '\0';
       lastCharIndex = strlen(string)-1;
+      if (lastCharIndex <= -1)
+         break;
    }
 }
 
 bool isMultilinePlainTextOpeningTag(const char* line)
 {
-   int firstUsefulPartIndex;
-   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
-      ;
-
-   if (line[firstUsefulPartIndex]!='[')
+   if (line[0]!='[')
       return false;
 
    int i;
-   for (i=firstUsefulPartIndex+1; line[i]==' ' || line[i]=='\t'; i++)
+   for (i=1; line[i]==' ' || line[i]=='\t'; i++)
       ;
 
    if (line[i]!='\0' && line[i]!='%')
@@ -416,12 +418,10 @@ bool isMultilinePlainTextClosingTag(const char* line)
 
 bool isImageLine(const char* line)
 {
-   int firstUsefulPartIndex;
-   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' '||line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
-      ;
-
-   //if line begins in <img
-   return (line[firstUsefulPartIndex]=='<' && line[firstUsefulPartIndex+1]=='i' && line[firstUsefulPartIndex+2]=='m' && line[firstUsefulPartIndex+3]=='g');
+   //if line begins in "<img " or "<img\t"
+   if (line[0]=='<' && line[1]=='i' && line[2]=='m' && line[3]=='g')
+      return (line[4]==' ' || line[4]=='\t');
+   return false;
 }
 
 void writeAlinea(FILE* file)
@@ -434,20 +434,9 @@ char* pickImageFileName(const char* line)
 {
    char* tmp = malloc(strlen(line)*sizeof(char));
 
-   int firstUsefulPartIndex;
-   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
-      ;
-
    int firstNameIndex;
-   for (firstNameIndex=firstUsefulPartIndex+4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
+   for (firstNameIndex=4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
       ;
-
-   if (firstNameIndex == firstUsefulPartIndex+4)
-   {
-      MD_ERROR(currentLineNb, "This line isn't a valid line characterizing the inclusion of an image\nWrite '\\<' instead of '<' if it isn't supposed to include an image");
-      free(tmp);
-      return NULL;
-   }
 
    int iDest=0;
    for (int i=firstNameIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
@@ -465,12 +454,8 @@ char* pickImageLabel(const char* line)
 {
    char* tmp = malloc(strlen(line)*sizeof(char));
 
-   int firstUsefulPartIndex;
-   for (firstUsefulPartIndex=0; line[firstUsefulPartIndex]==' ' || line[firstUsefulPartIndex]=='\t'; firstUsefulPartIndex++)
-      ;
-
    int firstNameIndex;
-   for (firstNameIndex=firstUsefulPartIndex+4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
+   for (firstNameIndex=4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
       ;
 
    int lastNameIndex;
@@ -501,14 +486,8 @@ char* pickImageLabel(const char* line)
    return label;
 }
 
-char* pickURL(const char* line, int firstURLIndex)
+char* pickURL(const char* line, unsigned int firstURLIndex)
 {
-   if (firstURLIndex <= 0)
-   {
-      WARNING_FUNC("pickURL", "Wrong index specified");
-      return NULL;
-   }
-
    if (line[firstURLIndex]!='h')
    {
       MD_ERROR(currentLineNb, "There is an invalid link in this line\nIf it is not supposed to be a link, write '\\<' instead of '<'");
@@ -528,14 +507,8 @@ char* pickURL(const char* line, int firstURLIndex)
    return url;
 }
 
-char* pickURLLabel(const char* line, int firstURLIndex)
+char* pickURLLabel(const char* line, unsigned int firstURLIndex)
 {
-   if (firstURLIndex <= 0)
-   {
-      WARNING_FUNC("pickURLLabel", "Wrong index specified");
-      return NULL;
-   }
-
    char* tmp = malloc(strlen(line)*sizeof(char));
 
    int firstSpaceIndex;
@@ -613,15 +586,6 @@ char* pickItemFromItemize(const char* line)
    strcpy(item, tmp);
    free(tmp);
    return item;
-}
-
-short getIndentation(const char* line)
-{
-   int nbFirstSpaces;
-   for (nbFirstSpaces=0; line[nbFirstSpaces]==' ' || line[nbFirstSpaces]=='\t'; nbFirstSpaces++)
-      ;
-
-   return nbFirstSpaces;
 }
 
 void writeItemize(FILE* bodyOutputFile, const char* line)
