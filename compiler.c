@@ -726,20 +726,41 @@ void writeEnumerate(FILE* bodyOutputFile, const char* line)
 
    char* nextLine = getNextLineFromFile();
    currentLineNb++;
-   while (nextLine!=NULL && isEnumLine(nextLine))
+   while (nextLine!=NULL && (isEnumLine(nextLine) || isItemizeLine(nextLine)))
    {
       inputIndentationNb = getIndentation(nextLine);
 
-      if (inputIndentationNb == enumerateIndentation)
-         writeEnumerateItem(bodyOutputFile, nextLine);
-      else if (inputIndentationNb > enumerateIndentation)
+      if (isEnumLine(nextLine))
       {
-         nbAlinea++;
-         writeEnumerate(bodyOutputFile, nextLine);
-         nbAlinea--;
+         if (inputIndentationNb == enumerateIndentation)
+            writeEnumerateItem(bodyOutputFile, nextLine);
+         else if (inputIndentationNb > enumerateIndentation)
+         {
+            nbAlinea++;
+            writeEnumerate(bodyOutputFile, nextLine);
+            nbAlinea--;
+         }
+         else//back to parent enumerate
+            break;
       }
-      else//back to parent enumerate
-         break;
+      else//isItemizeLine(nextLine)
+      {
+         if (inputIndentationNb == enumerateIndentation)
+         {
+            MD_WARNING(currentLineNb, "Wrong indentation for itemize environment. The itemize must not be indented on the same level as the enumerate environment");
+            nbAlinea++;
+            writeItemize(bodyOutputFile, nextLine);
+            nbAlinea--;
+         }
+         else if (inputIndentationNb > enumerateIndentation)
+         {
+            nbAlinea++;
+            writeItemize(bodyOutputFile, nextLine);
+            nbAlinea--;
+         }
+         else//back to parent itemize
+            break;
+      }
 
       free(nextLine);
       nextLine = getNextLineFromFile();
