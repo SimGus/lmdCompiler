@@ -82,8 +82,6 @@ void translateLineByLine(FILE* bodyOutputFile)
    char* line;
    while ((line = getNextLineFromFile()) != NULL)
    {
-      currentLineNb++;
-      inputIndentationNb = getIndentation(line);
       interpretLine(bodyOutputFile, &line[inputIndentationNb]);
       free(line);
    }
@@ -173,7 +171,6 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
       int beginningLineNb = currentLineNb;
 
       char* nextLine = getNextLineFromFile();
-      currentLineNb++;
 
       fputs("\\begin{verbatim}\n", bodyOutputFile);
 
@@ -189,7 +186,6 @@ void interpretLine(FILE* bodyOutputFile, const char* line)
 
          free(nextLine);
          nextLine = getNextLineFromFile();
-         currentLineNb++;
          if (nextLine == NULL)
             break;
       }
@@ -277,6 +273,10 @@ char* getNextLineFromFile()
 
    //get the cursor to the next line
    fseek(inputFile, 1, SEEK_CUR);
+
+   //update reading informations
+   currentLineNb++;
+   inputIndentationNb = getIndentation(line);
 
    return line;
 }
@@ -635,11 +635,8 @@ void writeItemize(FILE* bodyOutputFile, const char* line)
    writeItemizeItem(bodyOutputFile, line);
 
    char* nextLine = getNextLineFromFile();
-   currentLineNb++;
    while (nextLine != NULL && (isItemizeLine(nextLine) || isEnumLine(nextLine)))
    {
-      inputIndentationNb = getIndentation(nextLine);
-
       if (isItemizeLine(nextLine))
       {
          if (inputIndentationNb == itemizeIndentation)
@@ -674,7 +671,6 @@ void writeItemize(FILE* bodyOutputFile, const char* line)
 
       free(nextLine);
       nextLine = getNextLineFromFile();
-      currentLineNb++;
    }
 
    nbAlinea--;
@@ -725,11 +721,8 @@ void writeEnumerate(FILE* bodyOutputFile, const char* line)
    writeEnumerateItem(bodyOutputFile, line);
 
    char* nextLine = getNextLineFromFile();
-   currentLineNb++;
    while (nextLine!=NULL && (isEnumLine(nextLine) || isItemizeLine(nextLine)))
    {
-      inputIndentationNb = getIndentation(nextLine);
-
       if (isEnumLine(nextLine))
       {
          if (inputIndentationNb == enumerateIndentation)
@@ -764,7 +757,6 @@ void writeEnumerate(FILE* bodyOutputFile, const char* line)
 
       free(nextLine);
       nextLine = getNextLineFromFile();
-      currentLineNb++;
    }
 
    if (nextLine != NULL)//put cursor back to beginning of the line
