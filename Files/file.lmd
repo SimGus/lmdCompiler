@@ -1,4 +1,4 @@
-# Syntaxe d'un langage de *markdown* à traduire en LaTeX %Première ligne du titre
+# Syntaxe d'un langage de *markdown* à traduire en **LaTeX** %Première ligne du titre
 # _Définition_
 # 2-6-2016
 # Simon Gustin
@@ -11,9 +11,9 @@
 		_Texte souligné_
 		~Texte barré~
 		!!Texte important!!
-		>> Citation (>>)
+		>> Citation >>
 
-### *Caractères spéciaux* %comment
+### *Caractères particuliers* %comment
 	À n'utiliser que si la compilation les interprète comme du markdown
 	\\ backslash
 	\_ underscore
@@ -29,9 +29,9 @@
 	Paragraphe
 	Passage à la ligne
 
-	<img image.png label w:h>
+	<img image.png label de l'**image** <w:h>>
 	<http://link.com>
-	<http://link.com/ label à plusieurs mots>
+	<http://link.com/ label à plusieurs *mots*>
 	[Plain text % $ #include<stdlib.h> int main(){return EXIT_SUCCESS;}]
 	
 	[

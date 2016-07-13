@@ -239,11 +239,16 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
          free(imageFileName);
 
          char* label = pickImageLabel(line);
+         char* translatedLabel;
          if (label != NULL)
          {
+            translateString(label, &translatedLabel);
+
             writeAlinea(bodyOutputFile);
-            fprintf(bodyOutputFile, "\\caption{%s}\n", label);
+            fprintf(bodyOutputFile, "\\caption{%s}\n", translatedLabel);
+
             free(label);
+            free(translatedLabel);
 
             //TODO sizes
          }
@@ -514,8 +519,6 @@ char* pickImageFileName(const char* line)
 
 char* pickImageLabel(const char* line)
 {
-   char* tmp = malloc(strlen(line)*sizeof(char));
-
    int firstNameIndex;
    for (firstNameIndex=4; line[firstNameIndex]==' ' || line[firstNameIndex]=='\t'; firstNameIndex++)
       ;
@@ -536,8 +539,10 @@ char* pickImageLabel(const char* line)
    for (firstLabelIndex=lastNameIndex; line[firstLabelIndex]==' '||line[firstLabelIndex]=='\t'; firstLabelIndex++)
       ;
 
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
    int iDest;
-   for (int i=firstLabelIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+   for (int i=firstLabelIndex; line[i]!='>' && line[i]!='\0'; i++, iDest++)
       tmp[iDest] = line[i];
    tmp[iDest] = '\0';
 
@@ -571,8 +576,6 @@ char* pickURL(const char* line, unsigned int firstURLIndex)
 
 char* pickURLLabel(const char* line, unsigned int firstURLIndex)
 {
-   char* tmp = malloc(strlen(line)*sizeof(char));
-
    int firstSpaceIndex;
    for (firstSpaceIndex=firstURLIndex; line[firstSpaceIndex]!='>' && line[firstSpaceIndex]!=' ' && line[firstSpaceIndex]!='\t' && line[firstSpaceIndex]!='\0'; firstSpaceIndex++)
       ;
@@ -580,18 +583,17 @@ char* pickURLLabel(const char* line, unsigned int firstURLIndex)
    if (line[firstSpaceIndex]=='\0')
    {
       MD_ERROR(currentLineNb, "Missing closing tag for hyperlink (>)");
-      free(tmp);
       return NULL;
    }
    if (line[firstSpaceIndex]=='>')
-   {
-      free(tmp);
       return NULL;
-   }
+
    //line[firstSpaceIndex]==' ' || line[firstSpaceIndex]=='\t'
    int firstLabelIndex;
    for (firstLabelIndex=firstSpaceIndex; line[firstLabelIndex]==' ' || line[firstLabelIndex]=='\t'; firstLabelIndex++)
       ;
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
 
    int i, iDest = 0;
    for (i=firstLabelIndex; line[i]!='>' && line[i]!='\0'; i++, iDest++)
@@ -1077,6 +1079,7 @@ void translateString(const char* source, char** destination)
 					case '\\':
 						translatedStringLength += 13;
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s\\textbackslash ", translatedString);
 						iTranslated += 14;
 						i++;
@@ -1102,6 +1105,7 @@ void translateString(const char* source, char** destination)
 					case '~':
 						translatedStringLength += 4;
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s$\\sim$", translatedString);
 						iTranslated += 5;
 						i++;
@@ -1151,6 +1155,7 @@ void translateString(const char* source, char** destination)
 						pilePush(&environments, ITALIC);
 						translatedStringLength += 7;//already adding a place for the closing '}'
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s\\textit{", translatedString);
 						iTranslated += 7;
 					}
@@ -1169,6 +1174,7 @@ void translateString(const char* source, char** destination)
 						pilePush(&environments, BOLD);
 						translatedStringLength += 5;//already adding a place for the closing '}'
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s\\textbf{", translatedString);
 						iTranslated += 7;
 						i++;
@@ -1179,6 +1185,7 @@ void translateString(const char* source, char** destination)
 						pilePush(&environments, ITALIC);
 						translatedStringLength += 7;//already adding a place for the closing '}'
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s\\textit{", translatedString);
 						iTranslated += 7;
 					}
@@ -1197,6 +1204,7 @@ void translateString(const char* source, char** destination)
 					pilePush(&environments, UNDERLINE);
 					translatedStringLength += 10;
 					reallocate(&translatedString, translatedStringLength);
+               translatedString[iTranslated] = '\0';
 					sprintf(translatedString, "%s\\underline{", translatedString);
 					iTranslated += 10;
 				}
@@ -1215,6 +1223,7 @@ void translateString(const char* source, char** destination)
 					pilePush(&environments, STRIKETHROUGH);
 					translatedStringLength += 5;
 					reallocate(&translatedString, translatedStringLength);
+               translatedString[iTranslated] = '\0';
 					sprintf(translatedString, "%s\\sout{", translatedString);
 					iTranslated += 5;
 				}
@@ -1235,6 +1244,7 @@ void translateString(const char* source, char** destination)
 						pilePush(&environments, EMPHASIZED);
 						translatedStringLength += 4;
 						reallocate(&translatedString, translatedStringLength);
+                  translatedString[iTranslated] = '\0';
 						sprintf(translatedString, "%s\\emph{", translatedString);
 						iTranslated += 5;
 						i++;
@@ -1478,12 +1488,16 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                   else
                   {
                      char* urlLabel = pickURLLabel(string, i+1);
+                     char* translatedUrlLabel;
                      if (urlLabel == NULL)//no label
                         fprintf(bodyOutputFile, "\\url{%s}", url);
                      else//label
                      {
-                        fprintf(bodyOutputFile, "\\href{%s}{%s}", url, urlLabel);
+                        translateString(urlLabel, &translatedUrlLabel);
+
+                        fprintf(bodyOutputFile, "\\href{%s}{%s}", url, translatedUrlLabel);
                         free(urlLabel);
+                        free(translatedUrlLabel);
                      }
                      free(url);
 
