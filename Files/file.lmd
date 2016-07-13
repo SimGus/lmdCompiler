@@ -31,7 +31,7 @@
 
 	<img image.png label w:h>
 	<http://link.com>
-	<http://link.com/ label>
+	<http://link.com/ label à plusieurs mots>
 	[Plain text % $ #include<stdlib.h> int main(){return EXIT_SUCCESS;}]
 	
 	[

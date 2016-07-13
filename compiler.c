@@ -594,9 +594,11 @@ char* pickURLLabel(const char* line, unsigned int firstURLIndex)
       ;
 
    int i, iDest = 0;
-   for (i=firstLabelIndex; line[i]!='>' && line[i]!=' ' && line[i]!='\t' && line[i]!='\0'; i++, iDest++)
+   for (i=firstLabelIndex; line[i]!='>' && line[i]!='\0'; i++, iDest++)
       tmp[iDest] = line[i];
    tmp[iDest] = '\0';
+
+   removeUselessSpaces(tmp);
 
    if (line[i] == '\0')
    {
