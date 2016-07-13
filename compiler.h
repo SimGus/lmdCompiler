@@ -204,6 +204,43 @@ void writeEnumerateItem(FILE* bodyOutputFile, const char* line);
 char* pickItemFromEnumerate(const char* line);
 
 /*
+ * @return :   true if the line is an opening or closing line for a tabular environment (thus if the useful part of the line is only made off of equal signs)
+ *             false otherwise
+ */
+bool isSimpleTableTagLine(const char* line);
+
+/*
+ * Writes a simple table to bodyOutputFile
+ * Triggered when an opening line for tabular environments is detected
+ */
+void writeSimpleTable(FILE* bodyOutputFile);
+
+/*
+ * @return :   true if the first character of the useful part of the line is '|
+ *             false otherwise'
+ */
+bool isSimpleTableCellsLine(const char* line);
+
+/*
+ * @return :   the number of lines for a simple table found in line
+ *             0 if the line isn't a simple table cell line
+ */
+unsigned char getNbSimpleTableColumns(const char* line);
+
+/*
+ * @return :   a string containing the content of the cell with index index (without the spaces around it)
+ *             NULL if the content couldn't be found (wrong index)
+ * @post : the string returned MUST be freed
+ */
+char* getSimpleTableCellContent(const char* line, unsigned short index);
+
+/*
+ * @return :   true if the useful part of the line is made off of dashes
+ *             false otherwise
+ */
+bool isSimpleTableHorizontalLine(const char* line);
+
+/*
  * Translates source (in markdown) to destination (in LaTeX)
  * @post : *destination MUST be freed
  */

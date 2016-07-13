@@ -267,6 +267,10 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       writeEnumerate(bodyOutputFile, line);
       fputc('\n', bodyOutputFile);
    }
+   else if (isSimpleTableTagLine(line))
+   {
+      writeSimpleTable(bodyOutputFile);
+   }
    else
    {
       writeAlinea(bodyOutputFile);
@@ -838,6 +842,219 @@ char* pickItemFromEnumerate(const char* line)
    return item;
 }
 
+bool isSimpleTableTagLine(const char* line)
+{
+   unsigned short firstNonSpaceIndex = 0;
+   if (line[0]==' ' || line[0]=='\t')
+      firstNonSpaceIndex = inputIndentationNb;
+
+   if (line[firstNonSpaceIndex]!='=')
+      return false;
+
+   unsigned short i;
+   for (i=firstNonSpaceIndex; line[i]=='='; i++)
+      ;
+
+   if (line[i]!='\0' && line[i]!='%' && line[i]!=' ' && line[i]!='\t')
+      return false;
+
+   if (line[i]==' ' || line[i]=='\t')
+   {
+      for (;line[i]==' ' || line[i]=='\t'; i++)
+         ;
+      if (line[i]!='\0' && line[i]!='%')
+         return false;
+   }
+
+   return true;
+}
+
+void writeSimpleTable(FILE* bodyOutputFile)
+{
+   char* nextLine = getNextLineFromFile();
+   unsigned char nbColumns = getNbSimpleTableColumns(nextLine);
+   if (nbColumns == 0)
+   {
+      //write line to output file
+      fputs("=============\n\n", bodyOutputFile);
+      //back to beginning of the line
+      fseek(inputFile, -(strlen(nextLine)+1), SEEK_CUR);
+      currentLineNb--;
+      free(nextLine);
+      MD_WARNING(currentLineNb, "This line is not a table line (must begin in '|'), even though the last line was a table opening line. The line with equal signs could be wrongly translated. Use '\\' at the beginning of the line if it isn't supposed to be interpreted as a table.");
+      return;
+   }
+
+   writeAlinea(bodyOutputFile);
+   fputs("\\begin{tabular}{", bodyOutputFile);
+   for (int i=0; i<nbColumns; i++)
+      fputs("|l", bodyOutputFile);
+   fputs("|}\n", bodyOutputFile);
+   nbAlinea++;
+
+   writeAlinea(bodyOutputFile);
+   fputs("\\hline\n", bodyOutputFile);
+
+   char *currentCellContent = NULL, *currentTranslatedCellContent;
+   while (nextLine != NULL && !isSimpleTableTagLine(nextLine))
+   {
+      if (isSimpleTableCellsLine(nextLine))
+      {
+         for (int i=0; i<nbColumns; i++)
+         {
+            currentCellContent = getSimpleTableCellContent(nextLine, i);
+            if (currentCellContent == NULL)
+            {
+               MD_ERROR(currentLineNb, "Wrong number of columns on that line.");
+               free(currentCellContent);
+               break;
+            }
+
+            translateString(currentCellContent, &currentTranslatedCellContent);
+            //TODO translate cell
+            if (i == 0)
+            {
+               writeAlinea(bodyOutputFile);
+               fprintf(bodyOutputFile, "%s", currentTranslatedCellContent);
+            }
+            else
+               fprintf(bodyOutputFile, " & %s", currentTranslatedCellContent);
+
+            free(currentTranslatedCellContent);
+            free(currentCellContent);
+         }
+         fputs("\\\\\n", bodyOutputFile);
+      }
+      else if (isSimpleTableHorizontalLine(nextLine))
+      {
+         writeAlinea(bodyOutputFile);
+         fputs("\\hline\n", bodyOutputFile);
+      }
+      else
+      {
+         MD_ERROR(currentLineNb, "This line is not a valid table cells line (must begin in '|'). It will not be translated.");
+      }
+
+      free(nextLine);
+      nextLine = getNextLineFromFile();
+   }
+
+   if (nextLine != NULL)
+      free(nextLine);
+   else
+   {
+      MD_ERROR(currentLineNb, "Missing closing table line.");
+   }
+
+   writeAlinea(bodyOutputFile);
+   fputs("\\hline\n", bodyOutputFile);
+
+   nbAlinea--;
+   writeAlinea(bodyOutputFile);
+   fputs("\\end{tabular}\n\n", bodyOutputFile);
+}
+
+bool isSimpleTableCellsLine(const char* line)
+{
+   unsigned short firstNonSpaceIndex = 0;
+   if (line[0] == ' ' || line[0] == '\t')
+      firstNonSpaceIndex = inputIndentationNb;
+
+   return (line[firstNonSpaceIndex] == '|');
+}
+
+unsigned char getNbSimpleTableColumns(const char* line)
+{
+   int firstNonSpaceIndex = 0;
+   if (line[0]==' ' || line[0]=='\t')
+      firstNonSpaceIndex = inputIndentationNb;
+
+   if (line[firstNonSpaceIndex] != '|')
+      return 0;
+
+   unsigned char nbColumns = 0;
+   int i = firstNonSpaceIndex+1;
+   while (line[i]!='\0' && line[i]!='%')
+   {
+      if (line[i] == '|')
+         nbColumns++;
+      else if (line[i] == '\\' && line[i+1] != '\0')
+         i++;
+
+      i++;
+   }
+
+   return nbColumns;
+}
+
+char* getSimpleTableCellContent(const char* line, unsigned short index)
+{
+   unsigned short firstNonSpaceIndex = 0;
+   if (line[0]==' ' || line[0]=='\t')
+      firstNonSpaceIndex = inputIndentationNb;
+
+   unsigned short firstRequestedCellTextIndex = firstNonSpaceIndex;
+   for (int i=0; i<=index; i++)
+   {
+      for (; line[firstRequestedCellTextIndex]!='|' && line[firstRequestedCellTextIndex]!='\0'; firstRequestedCellTextIndex++)
+         ;
+
+      if (line[firstRequestedCellTextIndex] == '\0')
+      {
+         MD_ERROR(currentLineNb, "Missing last vertical line '|'.");
+         return NULL;
+      }
+      firstRequestedCellTextIndex++;
+   }
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+
+   unsigned short i, iDest = 0;
+   for (i=firstRequestedCellTextIndex; line[i]!='|' && line[i]!='\0' && line[i]!='%'; i++, iDest++)
+      tmp[iDest] = line[i];
+   tmp[iDest] = '\0';
+
+   if (line[i] == '\0')
+   {
+      MD_WARNING(currentLineNb, "Missing last vertical line '|'.");
+   }
+
+   removeUselessSpaces(tmp);
+
+   char* cellContent = malloc( (strlen(tmp)+1)*sizeof(char) );
+   strcpy(cellContent, tmp);
+   free(tmp);
+
+   return cellContent;
+}
+
+bool isSimpleTableHorizontalLine(const char* line)
+{
+   unsigned short firstNonSpaceIndex = 0;
+   if (line[0]==' ' || line[0]=='\t')
+      firstNonSpaceIndex = inputIndentationNb;
+
+   if (line[firstNonSpaceIndex]!='-')
+      return false;
+
+   unsigned short i;
+   for (i=firstNonSpaceIndex; line[i]=='-'; i++)
+      ;
+
+   if (line[i]!='\0' && line[i]!='%' && line[i]!=' ' && line[i]!='\t')
+      return false;
+
+   if (line[i]==' ' || line[i]=='\t')
+   {
+      for (;line[i]==' ' || line[i]=='\t'; i++)
+         ;
+      if (line[i]!='\0' && line[i]!='%')
+         return false;
+   }
+
+   return true;
+}
+
 void translateString(const char* source, char** destination)
 {
 	int translatedStringLength = strlen(source)+1;
@@ -907,6 +1124,10 @@ void translateString(const char* source, char** destination)
 						translatedString[iTranslated] = '+';
 						i++;
 						break;
+               case '=':
+                  translatedString[iTranslated] = '=';
+                  i++;
+                  break;
 					default:
 						translatedString[iTranslated] = '\\';
 						break;
@@ -1145,6 +1366,9 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                      break;
                   case '>':
                      fputc('>', bodyOutputFile);
+                     break;
+                  case '=':
+                     fputc('=', bodyOutputFile);
                      break;
                   default:
                      fprintf(bodyOutputFile, "\\textbackslash %c", string[i]);
