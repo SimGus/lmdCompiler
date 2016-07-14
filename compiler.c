@@ -1468,9 +1468,10 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                }
                else//open QUOTE environment
                {
-                  i++;
-                  for (int j=1; string[i+j]==' ' || string[i+j]=='\t'; j++)//BUG this doesn't work properly
+                  i += 2;//pass the ">>"
+                  while (string[i]==' ' || string[i]=='\t')
                      i++;
+                  i--;//balance the i++ of the for
 
                   fputs("\\textrm{", bodyOutputFile);
                   pilePush(&environments, QUOTE);
@@ -1529,33 +1530,34 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
       switch (popped)
       {
          case ITALIC:
-            MD_WARNING(currentLineNb, "Missing closing tag for italic environment (*)");
+            MD_WARNING(currentLineNb, "Missing closing tag for italic environment (*).");
             fputc('}', bodyOutputFile);
             break;
          case BOLD:
-            MD_WARNING(currentLineNb, "Missing closing tag for bold environment (**)");
+            MD_WARNING(currentLineNb, "Missing closing tag for bold environment (**).");
             fputc('}', bodyOutputFile);
             break;
          case UNDERLINE:
-            MD_WARNING(currentLineNb, "Missing closing tag for underline environment (_)");
+            MD_WARNING(currentLineNb, "Missing closing tag for underline environment (_).");
             fputc('}', bodyOutputFile);
             break;
          case STRIKETHROUGH:
-            MD_WARNING(currentLineNb, "Missing closing tag for strikethroughed environment (~)");
+            MD_WARNING(currentLineNb, "Missing closing tag for strikethroughed environment (~).");
             fputc('}', bodyOutputFile);
             break;
          case EMPHASIZED:
-            MD_WARNING(currentLineNb, "Missing closing tag for emphasized environment (!!)");
+            MD_WARNING(currentLineNb, "Missing closing tag for emphasized environment (!!).");
             fputc('}', bodyOutputFile);
             break;
          case PLAIN_TEXT:
-            MD_WARNING(currentLineNb, "Missing closing tag for plain text (])");
+            MD_WARNING(currentLineNb, "Missing closing tag for plain text (]).");
             fputc('?', bodyOutputFile);
             break;
          case QUOTE://QUOTE environment can be unclosed
             fputc('}', bodyOutputFile);
             break;
          default:
+            MD_ERROR(currentLineNb, "An unknown environment was detected and is missing a closing tag. Output may not be usable.")
             break;
       }
    }
