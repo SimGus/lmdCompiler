@@ -1469,6 +1469,9 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                else//open QUOTE environment
                {
                   i++;
+                  for (int j=1; string[i+j]==' ' || string[i+j]=='\t'; j++)//BUG this doesn't work properly
+                     i++;
+
                   fputs("\\textrm{", bodyOutputFile);
                   pilePush(&environments, QUOTE);
                }
@@ -1549,7 +1552,10 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
             MD_WARNING(currentLineNb, "Missing closing tag for plain text (])");
             fputc('?', bodyOutputFile);
             break;
-         default://QUOTE environment can be unclosed
+         case QUOTE://QUOTE environment can be unclosed
+            fputc('}', bodyOutputFile);
+            break;
+         default:
             break;
       }
    }

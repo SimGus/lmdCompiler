@@ -11,7 +11,7 @@
 		_Texte souligné_
 		~Texte barré~
 		!!Texte important!!
-		>> Citation >>
+		>>      		Citation 
 
 ### *Caractères particuliers* %comment
 	À n'utiliser que si la compilation les interprète comme du markdown
