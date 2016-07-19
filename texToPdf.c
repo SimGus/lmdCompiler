@@ -1,6 +1,6 @@
 #include "texToPdf.h"
 
-STATUS compileTexToPdf(const char* outputFileName)
+STATUS compileTexToPdf(const char* outputFileName, bool displayPdflatexStdout)
 {
    char* texFileName = addTexExtension(outputFileName);
    if (texFileName == NULL)
@@ -9,9 +9,18 @@ STATUS compileTexToPdf(const char* outputFileName)
       return RETURN_FAILURE;
    }
 
-   char* command = malloc( (strlen(PDFLATEX_COMMAND)+strlen(texFileName)+1)*sizeof(char) );
-   sprintf(command, "%s%s", PDFLATEX_COMMAND, texFileName);
-
+   char* command;
+   if (displayPdflatexStdout)
+   {
+      command = malloc( (strlen(PDFLATEX_COMMAND)+strlen(texFileName)+1)*sizeof(char) );
+      sprintf(command, "%s%s", PDFLATEX_COMMAND, texFileName);
+   }
+   else
+   {
+      command = malloc( (strlen(PDFLATEX_COMMAND_REDIRECT)+strlen(texFileName)-1)*sizeof(char) );
+      sprintf(command, PDFLATEX_COMMAND_REDIRECT, texFileName);
+   }
+   
    puts("\nCompiling tex file to pdf file...");
    printf("%s\n\n", command);
 

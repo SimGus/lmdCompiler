@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdbool.h>
 
 #include "error.h"
 #include "compiler.h"
@@ -33,6 +34,8 @@ void printHelp()
 	puts("\t\t\t\tDon't delete the temporary files produced by pdflatex.");
 	puts("\t\t\t--keep-lmd-tmp-files :");
 	puts("\t\t\t\tDon't delete the temporary file produced by LMD.");
+	puts("\t\t\t--print-pdflatex-stdout :");
+	puts("\t\t\t\tPrint the standard output of the pdflatex command.");
 	puts("\tExample : ./lmd -o outputFile -K --output-type=tex-pdf file/input/inputFile.lmd");
 }
 
@@ -50,7 +53,7 @@ int main(int argc, char* argv[])
 {
 	char *workingDirectory = NULL, *inputFileName = NULL, *outputFileName = NULL;
 	OutputType outputFilesType = BOTH;
-	bool keepPdflatexFiles = false, keepTmpLmdFiles = false;
+	bool keepPdflatexFiles = false, keepTmpLmdFiles = false, displayPdflatexStdout = false;
 
 	if (argc <= 1 || strcmp(argv[1], "--help") == 0)
 	{
@@ -142,6 +145,10 @@ int main(int argc, char* argv[])
 		{
 			keepTmpLmdFiles = true;
 		}
+		else if (strcmp(argv[i], "--print-pdflatex-stdout") == 0)
+		{
+			displayPdflatexStdout = true;
+		}
 		else
 		{
 			if (inputFileName != NULL)
@@ -223,12 +230,12 @@ int main(int argc, char* argv[])
 		freeFileNames(workingDirectory, inputFileName, outputFileName);
 		return EXIT_FAILURE;
 	}
-	puts("TEX translation over.");
+	puts("\nTEX translation over.");
 
 	//=====================Translate to pdf file==============================
 	if (outputFilesType == PDF || outputFilesType == BOTH)
 	{
-		err = compileTexToPdf(outputFileName);
+		err = compileTexToPdf(outputFileName, displayPdflatexStdout);
 		if (err != RETURN_SUCCESS)
 		{
 			puts("The compilation to pdf file ended with an error code.");
@@ -239,6 +246,8 @@ int main(int argc, char* argv[])
 	}
 
 	//======================Delete temporary files=================================
+
+	puts("Done.");
 
 	freeFileNames(workingDirectory, inputFileName, outputFileName);
 	return EXIT_SUCCESS;
