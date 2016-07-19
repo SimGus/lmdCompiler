@@ -7,8 +7,8 @@
 #include "error.h"
 #include "filename.h"
 
-#define PDFLATEX_COMMAND   "pdflatex --interaction=nonstopmode --jobname="
+#define PDFLATEX_COMMAND   "pdflatex --interaction=nonstopmode "
 
-STATUS compileTexToPdf(const char* texFileName, const char* pdfFileName);
+STATUS compileTexToPdf(const char* outputFileName);
 
 #endif //_TEX_TO_PDF_

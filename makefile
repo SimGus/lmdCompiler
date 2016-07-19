@@ -15,7 +15,7 @@ exe : $(PROG) clean
 $(PROG) : main.o compiler.o preamble.o usefulFunctions.o pile.o filename.o texToPdf.o
 	$(CC) $(FLAGS) -o $(PROG) main.o compiler.o preamble.o usefulFunctions.o pile.o filename.o texToPdf.o
 
-main.o : main.c error.h compiler.o filename.o texToPdf.o
+main.o : main.c error.h compiler.o filename.o texToPdf.o usefulFunctions.o
 	$(CC) $(FLAGS) -c main.c
 
 compiler.o : compiler.c compiler.h error.h preamble.o pile.o usefulFunctions.o

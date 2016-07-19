@@ -7,18 +7,12 @@
 
 #include "error.h"
 
-typedef enum
-{
-   TEX, PDF, BOTH
-} OutputType;
-
-char* argToInputFileName(const char* inputArg);
-char* argToOutputFileName(const char* outputArg, OutputType fileType);
-void replaceExtension(char* string, OutputType fileType);
-
-char* getFileNameWithoutExtension(const char* fileName);
-
 char* getDirName(const char* filePath);
 char* getBaseName(const char* filePath);
+
+char* getOutputNameFromInputName(const char* inputFileName);
+
+char* addTexExtension(const char* fileName);
+char* addPdfExtension(const char* fileName);
 
 #endif //_FILENAME_H_
