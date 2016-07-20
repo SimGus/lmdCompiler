@@ -55,8 +55,7 @@ char* getNextLineFromFile();
 unsigned short getIndentation(const char* line);
 
 /*
- * @pre : setWorkingDirectoryName must have been used before (thus workingDirName be set)
- * @return :   a string containing the name of the temporary file and its path if the program was run from another directory
+ * @return :   a string containing the name of the temporary file
  * @post : the string returned MUST be freed
  */
 char* getTmpFileName();
@@ -67,11 +66,6 @@ char* getTmpFileName();
  *             RETURN_FAILURE if the file couldn't be deleted
  */
 STATUS deleteFile(const char* filePath);
-
-/*
- * Sets global variable workingDirName to the path of the working directory
- */
-void setWorkingDirectoryName(const char* outputFileName);
 
 /*
  * @return :   true if the file with path imgFileName exists
