@@ -12,8 +12,7 @@
 #include "preamble.h"
 #include "usefulFunctions.h"
 #include "pile.h"
-
-#define TMP_OUTPUT_FILENAME "tmpBody.tmp"
+#include "files.h"
 
 #define MD_WARNING(lineNb, msg)  if (lineNb <= 0) \
                                     printf("WARNING (no line specified) :\n\t%s\n", msg); \
@@ -53,25 +52,6 @@ char* getNextLineFromFile();
  * @return : number of spaces at the beginning of the line
  */
 unsigned short getIndentation(const char* line);
-
-/*
- * @return :   a string containing the name of the temporary file
- * @post : the string returned MUST be freed
- */
-char* getTmpFileName();
-
-/*
- * Deletes the file with path filePath
- * @return :   RETURN_SUCCESS if everything worked fine
- *             RETURN_FAILURE if the file couldn't be deleted
- */
-STATUS deleteFile(const char* filePath);
-
-/*
- * @return :   true if the file with path imgFileName exists
- *             false otherwise
- */
-bool imageFileExists(const char* imgFileName);
 
 /*
  * @return :   a string containing the useful part of a line containing the name of a new section

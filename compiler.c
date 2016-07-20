@@ -216,7 +216,7 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       //TODO check if the image exists
       if (imageFileName != NULL)
       {
-         if (!imageFileExists(imageFileName))
+         if (!fileExists(imageFileName))
          {
             char msg[512];
             snprintf(msg, 512, "File '%s' doesn't exist", imageFileName);
@@ -313,33 +313,6 @@ unsigned short getIndentation(const char* line)
       ;
 
    return nbFirstSpaces;
-}
-
-char* getTmpFileName()
-{
-   char* tmpBodyOutputFilePath;
-   tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+1)*sizeof(char) );
-   strcpy(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME);
-
-   return tmpBodyOutputFilePath;
-}
-
-STATUS deleteFile(const char* filePath)
-{
-   if (unlink(filePath) != 0)
-   {
-      char msg[256] = "Couldn't delete temporary file";
-      snprintf(msg, 256, "%s '%s'", msg, filePath);
-      ERROR_MSG("deleteFile", msg);
-      perror(NULL);
-      return RETURN_FAILURE;
-   }
-   return RETURN_SUCCESS;
-}
-
-bool imageFileExists(const char* imgFileName)
-{
-   return (access(imgFileName, F_OK) != -1);
 }
 
 char* getTitleOfPart(const char* line)

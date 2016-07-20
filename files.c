@@ -1,4 +1,4 @@
-#include "filename.h"
+#include "files.h"
 
 char* getDirName(const char* filePath)
 {
@@ -100,4 +100,56 @@ char* addPdfExtension(const char* fileName)
 	fileNameWithExtension[fileNameLength+3] = 'f';
 
 	return fileNameWithExtension;
+}
+
+char* getRandomStringOf10Chars()
+{
+	char* answer = malloc(11*sizeof(char));
+	unsigned char i;
+	unsigned short randomNb;
+	for (i=0; i<10; i++)
+	{
+		randomNb = RAND_INT(0, 2);
+		if (randomNb == 0)
+			randomNb = RAND_INT(48, 57);
+		else if (randomNb == 1)
+			randomNb = RAND_INT(65, 90);
+		else
+			randomNb = RAND_INT(97, 122);
+
+		answer[i] = randomNb;
+	}
+	return answer;
+}
+
+char* getTmpFileName()
+{
+   char* tmpBodyOutputFilePath;
+   tmpBodyOutputFilePath = malloc( (strlen(TMP_OUTPUT_FILENAME)+11)*sizeof(char) );
+
+	char* randomPart = getRandomStringOf10Chars();
+
+	sprintf(tmpBodyOutputFilePath, TMP_OUTPUT_FILENAME, randomPart);//TMP_OUTPUT_FILENAME == "LMD-%s.tmp"
+
+	free(randomPart);
+
+   return tmpBodyOutputFilePath;
+}
+
+STATUS deleteFile(const char* filePath)
+{
+   if (unlink(filePath) != 0)
+   {
+      char msg[256] = "Couldn't delete temporary file";
+      snprintf(msg, 256, "%s '%s'", msg, filePath);
+      ERROR_MSG("deleteFile", msg);
+      perror(NULL);
+      return RETURN_FAILURE;
+   }
+   return RETURN_SUCCESS;
+}
+
+bool fileExists(const char* filePath)
+{
+   return (access(filePath, F_OK) != -1);
 }

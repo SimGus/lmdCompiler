@@ -2,10 +2,11 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
+#include <time.h>
 
 #include "error.h"
 #include "compiler.h"
-#include "filename.h"
+#include "files.h"
 #include "texToPdf.h"
 #include "usefulFunctions.h"
 
@@ -221,6 +222,8 @@ int main(int argc, char* argv[])
 	}
 
 	//===================Translate to tex file==================================
+   srand(time(NULL));
+
 	char* texFileName = addTexExtension(outputFileName);
 	STATUS err = compile(inputFileName, texFileName);
 	free(texFileName);

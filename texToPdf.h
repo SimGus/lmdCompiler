@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 #include "error.h"
-#include "filename.h"
+#include "files.h"
 
 #define PDFLATEX_COMMAND            "pdflatex --interaction=nonstopmode "
 #define PDFLATEX_COMMAND_REDIRECT   "pdflatex --interaction=nonstopmode %s > /dev/null"
