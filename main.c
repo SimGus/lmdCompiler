@@ -222,7 +222,7 @@ int main(int argc, char* argv[])
 
 	//===================Translate to tex file==================================
 	char* texFileName = addTexExtension(outputFileName);
-	STATUS err = compile(inputFileName, texFileName);
+	STATUS err = compile(inputFileName, texFileName, keepTmpLmdFiles);
 	if (err != RETURN_SUCCESS)
 	{
 		puts("The compilation to tex file ended with an error code.");

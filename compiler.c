@@ -5,7 +5,7 @@ unsigned int currentLineNb = 0;
 unsigned char nbAlinea = 0;
 unsigned short inputIndentationNb = 0;
 
-STATUS compile(const char* inputFileName, const char* outputFileName)
+STATUS compile(const char* inputFileName, const char* outputFileName, bool keepTmpFile)
 {
    FILE *outputFile = NULL, *tmpBodyOutputFile = NULL;
 
@@ -73,10 +73,14 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
 
    //close temporary file
    fclose(tmpBodyOutputFile);
-   if (deleteFile(tmpBodyOutputFilePath) != RETURN_SUCCESS)
+   if (!keepTmpFile)
    {
-      free(tmpBodyOutputFilePath);
-      return RETURN_FAILURE;
+      puts("Deleting temporary tex file...");
+      if (deleteFile(tmpBodyOutputFilePath) != RETURN_SUCCESS)
+      {
+         free(tmpBodyOutputFilePath);
+         return RETURN_FAILURE;
+      }
    }
    free(tmpBodyOutputFilePath);
 

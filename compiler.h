@@ -30,7 +30,7 @@
  * @return :   RETURN_SUCCESS if everything worked fine
  *             RETURN_FAILURE if there was a problem with files or translation
  */
-STATUS compile(const char* inputFileName, const char* outputFileName);
+STATUS compile(const char* inputFileName, const char* outputFileName, bool keepTmpFile);
 /*
  * Translates each line of the input file to bodyOutputFile
  */
