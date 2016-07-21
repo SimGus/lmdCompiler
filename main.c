@@ -2,7 +2,6 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
-#include <time.h>
 
 #include "error.h"
 #include "compiler.h"
@@ -222,8 +221,6 @@ int main(int argc, char* argv[])
 	}
 
 	//===================Translate to tex file==================================
-   srand(time(NULL));
-
 	char* texFileName = addTexExtension(outputFileName);
 	STATUS err = compile(inputFileName, texFileName);
 	free(texFileName);
@@ -235,10 +232,10 @@ int main(int argc, char* argv[])
 	}
 	puts("\nTEX translation over.");
 
-	//=====================Translate to pdf file==============================
+	//=====================Translate to pdf file and delete temporary files if needed==============================
 	if (outputFilesType == PDF || outputFilesType == BOTH)
 	{
-		err = compileTexToPdf(outputFileName, displayPdflatexStdout);
+		err = compileTexToPdf(outputFileName, displayPdflatexStdout, keepPdflatexFiles);
 		if (err != RETURN_SUCCESS)
 		{
 			puts("The compilation to pdf file ended with an error code.");
@@ -247,8 +244,6 @@ int main(int argc, char* argv[])
 		}
 		puts("PDF translation over.");
 	}
-
-	//======================Delete temporary files=================================
 
 	puts("Done.");
 

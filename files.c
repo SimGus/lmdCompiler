@@ -104,6 +104,8 @@ char* addPdfExtension(const char* fileName)
 
 char* getRandomStringOf10Chars()
 {
+	srand(time(NULL));
+
 	char* answer = malloc(11*sizeof(char));
 	unsigned char i;
 	unsigned short randomNb;
@@ -140,11 +142,14 @@ STATUS deleteFile(const char* filePath)
 {
    if (unlink(filePath) != 0)
    {
-      char msg[256] = "Couldn't delete temporary file";
-      snprintf(msg, 256, "%s '%s'", msg, filePath);
-      ERROR_MSG("deleteFile", msg);
-      perror(NULL);
-      return RETURN_FAILURE;
+		if (errno != ENOENT)//if file exists
+		{
+	      char msg[256] = "Couldn't delete temporary file";
+	      snprintf(msg, 256, "%s '%s'", msg, filePath);
+	      ERROR_MSG("deleteFile", msg);
+	      perror(NULL);
+	      return RETURN_FAILURE;
+		}
    }
    return RETURN_SUCCESS;
 }

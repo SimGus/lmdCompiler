@@ -11,6 +11,7 @@
 #define PDFLATEX_COMMAND            "pdflatex --interaction=nonstopmode "
 #define PDFLATEX_COMMAND_REDIRECT   "pdflatex --interaction=nonstopmode %s > /dev/null"
 
-STATUS compileTexToPdf(const char* outputFileName, bool displayPdflatexStdout);
+STATUS compileTexToPdf(const char* outputFileName, bool displayPdflatexStdout, bool keepTmpFiles);
+STATUS deleteTemporaryFiles();
 
 #endif //_TEX_TO_PDF_

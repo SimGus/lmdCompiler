@@ -6,6 +6,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <unistd.h>
+#include <time.h>
+#include <errno.h>
 
 #include "error.h"
 
