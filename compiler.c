@@ -250,21 +250,39 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
          {
             if (containsImageScale(line))
             {
+               writeAlinea(bodyOutputFile);
 
+               double scale = getImageScale(line);
+               if (scale == -1.0)
+                  fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+               else
+                  fprintf(bodyOutputFile, "\\includegraphics[scale=%f]{%s}\n", scale, imageFileName);
             }
             else
             {
                char *widthString = getImageWidth(line), *heightString = getImageHeight(line);
                writeAlinea(bodyOutputFile);
 
-               if (strcmp(widthString, "/") == 0 && strcmp(heightString, "/") == 0)
-                  fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
-               else if (strcmp(widthString, "/") == 0)
-                  fprintf(bodyOutputFile, "\\includegraphics[height=%s]{%s}\n", heightString, imageFileName);
-               else if (strcmp(heightString, "/") == 0)
-                  fprintf(bodyOutputFile, "\\includegraphics[width=%s]{%s}\n", widthString, imageFileName);
+               if (widthString == NULL || heightString == NULL)
+               {
+                  if (widthString == NULL && heightString == NULL)
+                     fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+                  else if (widthString == NULL)
+                     fprintf(bodyOutputFile, "\\includegraphics[height=%s]{%s}\n", heightString, imageFileName);
+                  else
+                     fprintf(bodyOutputFile, "\\includegraphics[width=%s]{%s}\n", widthString, imageFileName);
+               }
                else
-                  fprintf(bodyOutputFile, "\\includegraphics[width=%s,height=%s]{%s}\n", widthString, heightString, imageFileName);
+               {
+                  if (strcmp(widthString, "/") == 0 && strcmp(heightString, "/") == 0)
+                     fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+                  else if (strcmp(widthString, "/") == 0)
+                     fprintf(bodyOutputFile, "\\includegraphics[height=%s]{%s}\n", heightString, imageFileName);
+                  else if (strcmp(heightString, "/") == 0)
+                     fprintf(bodyOutputFile, "\\includegraphics[width=%s]{%s}\n", widthString, imageFileName);
+                  else
+                     fprintf(bodyOutputFile, "\\includegraphics[width=%s,height=%s]{%s}\n", widthString, heightString, imageFileName);
+               }
 
                free(widthString);
                free(heightString);
@@ -558,7 +576,31 @@ bool containsImageScale(const char* line)
 
 double getImageScale(const char* line)
 {
-   return 0.0;
+   char* pointerToPipe = strchr(line, '|');
+
+   unsigned short firstScaleIndex;
+   for (firstScaleIndex=1; pointerToPipe[firstScaleIndex]==' ' || pointerToPipe[firstScaleIndex]=='\t'; firstScaleIndex++)
+      ;
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+   unsigned short iDest = 0;
+   for (unsigned short i=firstScaleIndex; pointerToPipe[i]!=' ' && pointerToPipe[i]!='>' && pointerToPipe[i]!='\0'; i++, iDest++)
+      tmp[iDest] = pointerToPipe[i];
+   tmp[iDest] = '\0';
+
+   char* pointerToComma = strchr(tmp, ',');
+   if (pointerToComma != NULL)
+      *pointerToComma = '.';
+
+   double scale = strtod(tmp, NULL);
+   free(tmp);
+   if (scale == 0.0)
+   {
+      MD_ERROR(currentLineNb, "Scale of image must be a real number.");
+      return -1.0;
+   }
+
+   return scale;
 }
 
 char* getImageWidth(const char* line)
