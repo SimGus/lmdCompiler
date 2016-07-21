@@ -29,7 +29,7 @@
 	Paragraphe
 	Passage à la ligne
 
-	<img image.png label de l'**image** <w:h>>
+	<img image.png label de l'**image** | 10cm:/ >
 	<http://link.com>
 	<http://link.com/ label à plusieurs *mots*>
 	[Plain text % $ #include<stdlib.h> int main(){return EXIT_SUCCESS;}]

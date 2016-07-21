@@ -32,7 +32,16 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
 
    //translate line by line
    initPreamble();
-   translateLineByLine(tmpBodyOutputFile);
+   if (translateLineByLine(tmpBodyOutputFile) != RETURN_SUCCESS)
+   {
+      fclose(inputFile);
+      fclose(tmpBodyOutputFile);
+      freePreamble();
+      puts("Deleting temporary file...");
+      deleteFile(tmpBodyOutputFilePath);
+      free(tmpBodyOutputFilePath);
+      return RETURN_FAILURE;
+   }
    fclose(inputFile);
 
    //open output file
@@ -74,7 +83,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName)
    return RETURN_SUCCESS;
 }
 
-void translateLineByLine(FILE* bodyOutputFile)
+STATUS translateLineByLine(FILE* bodyOutputFile)
 {
    fputs("\\begin{document}\n", bodyOutputFile);
    fputs("\\maketitle\n\n", bodyOutputFile);
@@ -84,14 +93,16 @@ void translateLineByLine(FILE* bodyOutputFile)
    {
       if (interpretLine(bodyOutputFile, &line[inputIndentationNb]) != RETURN_SUCCESS)
       {
-         MD_WARNING(-1, "The output file isn't right, DON'T TRY TO COMPILE IT.");
+         MD_WARNING(-1, "There was a problem translating lmd file to tex file. No tex file will be produced.");
          free(line);
-         return;
+         return RETURN_FAILURE;
       }
       free(line);
    }
 
    fputs("\\end{document}\n", bodyOutputFile);
+
+   return RETURN_SUCCESS;
 }
 
 STATUS interpretLine(FILE* bodyOutputFile, const char* line)
@@ -205,6 +216,11 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    {
       addImagesToPreamble();
 
+      if (strchr(line, '>') == NULL)
+      {
+         MD_WARNING(currentLineNb, "Missing closing tag for image line '>'. Tex file could be wrong.");
+      }
+
       writeAlinea(bodyOutputFile);
       fputs("\\begin{figure}[h!]\n", bodyOutputFile);
       nbAlinea++;
@@ -213,21 +229,47 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       fputs("\\centering\n", bodyOutputFile);
 
       char* imageFileName = pickImageFileName(line);
-      //TODO check if the image exists
       if (imageFileName != NULL)
       {
          if (!fileExists(imageFileName))
          {
             char msg[512];
-            snprintf(msg, 512, "File '%s' doesn't exist", imageFileName);
+            snprintf(msg, 512, "Couldn't find file '%s'", imageFileName);
             MD_ERROR(currentLineNb, msg);
             free(imageFileName);
             return RETURN_FAILURE;
          }
 
-         writeAlinea(bodyOutputFile);
-         fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
-         free(imageFileName);
+         if (!containsImageSize(line))
+         {
+            writeAlinea(bodyOutputFile);
+            fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+            free(imageFileName);
+         }
+         else
+         {
+            if (containsImageScale(line))
+            {
+
+            }
+            else
+            {
+               char *widthString = getImageWidth(line), *heightString = getImageHeight(line);
+               writeAlinea(bodyOutputFile);
+
+               if (strcmp(widthString, "/") == 0 && strcmp(heightString, "/") == 0)
+                  fprintf(bodyOutputFile, "\\includegraphics{%s}\n", imageFileName);
+               else if (strcmp(widthString, "/") == 0)
+                  fprintf(bodyOutputFile, "\\includegraphics[height=%s]{%s}\n", heightString, imageFileName);
+               else if (strcmp(heightString, "/") == 0)
+                  fprintf(bodyOutputFile, "\\includegraphics[width=%s]{%s}\n", widthString, imageFileName);
+               else
+                  fprintf(bodyOutputFile, "\\includegraphics[width=%s,height=%s]{%s}\n", widthString, heightString, imageFileName);
+
+               free(widthString);
+               free(heightString);
+            }
+         }
 
          char* label = pickImageLabel(line);
          char* translatedLabel;
@@ -240,8 +282,6 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
 
             free(label);
             free(translatedLabel);
-
-            //TODO sizes
          }
       }
       else
@@ -467,9 +507,13 @@ char* pickImageLabel(const char* line)
 
    char* tmp = malloc(strlen(line)*sizeof(char));
 
-   int iDest;
-   for (int i=firstLabelIndex; line[i]!='>' && line[i]!='\0'; i++, iDest++)
+   int iDest = 0;
+   for (int i=firstLabelIndex; line[i]!='>' && line[i]!='|' && line[i]!='\0'; i++, iDest++)
+   {
+      if (line[i] == '\\' && line[i+1] != '\\')
+         i++;
       tmp[iDest] = line[i];
+   }
    tmp[iDest] = '\0';
 
    char* label = malloc( (strlen(tmp)+1)*sizeof(char) );
@@ -477,6 +521,179 @@ char* pickImageLabel(const char* line)
    free(tmp);
 
    return label;
+}
+
+bool containsImageSize(const char* line)
+{
+   if (strchr(line, '|') == NULL)
+      return false;
+
+   if (strchr(line, '%') == NULL)
+      return true;
+
+   for (unsigned int i=0; line[i]!='>' && line[i]!='\0'; i++)
+   {
+      if (line[i] == '|')
+         return true;
+   }
+   return false;
+}
+
+bool containsImageScale(const char* line)
+{
+   if (strchr(line, ':') == NULL)
+      return true;
+
+   if (strchr(line, '%') == NULL)
+      return false;
+
+   char* pointerToPipe = strchr(line, '|');
+   for (unsigned int i=0; pointerToPipe[i]!='>' && pointerToPipe[i]!='\0'; i++)
+   {
+      if (pointerToPipe[i] == ':')
+         return false;
+   }
+   return true;
+}
+
+double getImageScale(const char* line)
+{
+   return 0.0;
+}
+
+char* getImageWidth(const char* line)
+{
+   char* pointerToPipe = strchr(line, '|');
+
+   unsigned short firstWidthIndex;
+   for (firstWidthIndex=1; pointerToPipe[firstWidthIndex]==' ' || pointerToPipe[firstWidthIndex]=='\t'; firstWidthIndex++)
+      ;
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+   unsigned short iDest = 0;
+   for (unsigned short i=firstWidthIndex; pointerToPipe[i]!=':'; i++, iDest++)
+      tmp[iDest] = pointerToPipe[i];
+   tmp[iDest] = '\0';
+
+   if (strchr(tmp, '/') != NULL)
+   {
+      free(tmp);
+
+      char* answer = malloc(2*sizeof(char));
+      answer[0] = '/';
+      answer[1] = '\0';
+
+      return answer;
+   }
+
+   char* endPtr = NULL;
+   long width = strtol(tmp, &endPtr, 10);
+   if (endPtr == tmp)
+   {
+      MD_ERROR(currentLineNb, "Image width must be a number and a unit.");
+      free(tmp);
+      return NULL;
+   }
+   free(tmp);
+   if (width <= 0)
+   {
+      MD_WARNING(currentLineNb, "Image width should be greater than 0. Turning it into positive number.");
+      width *= -1;
+   }
+
+   char* widthString = malloc( (getNbLength(width)+3)*sizeof(char) );
+
+   if (strstr(tmp, "cm") != NULL)
+      sprintf(widthString, "%licm", width);
+   else if (strstr(tmp, "em") != NULL)
+      sprintf(widthString, "%liem", width);
+   else if (strstr(tmp, "pt") != NULL)
+      sprintf(widthString, "%lipt", width);
+   else if (strstr(tmp, "mm") != NULL)
+      sprintf(widthString, "%limm", width);
+   else if (strstr(tmp, "ex") != NULL)
+      sprintf(widthString, "%liex", width);
+   else if (strstr(tmp, "in") != NULL)
+      sprintf(widthString, "%liin", width);
+   else
+   {
+      MD_WARNING(currentLineNb, "Image width has not a correct unit (cm, mm, pt, in, em or ex). Turning it into centimeters.");
+      sprintf(widthString, "%licm", width);
+   }
+
+   return widthString;
+}
+
+char* getImageHeight(const char* line)
+{
+   char* pointerToColon = strchr(line, ':');
+
+   unsigned short firstHeightIndex;
+   for (firstHeightIndex=1; pointerToColon[firstHeightIndex]==' ' && pointerToColon[firstHeightIndex]=='\t'; firstHeightIndex++)
+      ;
+
+   char* tmp = malloc(strlen(line)*sizeof(char));
+   unsigned short iDest = 0;
+   for (unsigned short i=firstHeightIndex; pointerToColon[i]!='>' && pointerToColon[i]!='%' && pointerToColon[i]!='\0'; i++, iDest++)
+      tmp[iDest] = pointerToColon[i];
+   tmp[iDest] = '\0';
+
+   if (strchr(tmp, '/') != NULL)
+   {
+      free(tmp);
+
+      char* answer = malloc(2*sizeof(char));
+      answer[0] = '/';
+      answer[1] = '\0';
+
+      return answer;
+   }
+
+   char* endPtr = NULL;
+   long height = strtol(tmp, &endPtr, 10);
+   if (endPtr == tmp)
+   {
+      MD_ERROR(currentLineNb, "Image height must be a number and a unit");
+      free(tmp);
+      return NULL;
+   }
+   free(tmp);
+   if (height <= 0)
+   {
+      MD_WARNING(currentLineNb, "Image height must be greater than 0. Turning it into a positive number.");
+      height *= -1;
+   }
+
+   char* heightString = malloc( (getNbLength(height)+3)*sizeof(char) );
+
+   if (strstr(tmp, "cm") != NULL)
+      sprintf(heightString, "%licm", height);
+   else if (strstr(tmp, "em") != NULL)
+      sprintf(heightString, "%liem", height);
+   else if (strstr(tmp, "pt") != NULL)
+      sprintf(heightString, "%lipt", height);
+   else if (strstr(tmp, "mm") != NULL)
+      sprintf(heightString, "%limm", height);
+   else if (strstr(tmp, "ex") != NULL)
+      sprintf(heightString, "%liex", height);
+   else if (strstr(tmp, "in") != NULL)
+      sprintf(heightString, "%liin", height);
+   else
+   {
+      MD_WARNING(currentLineNb, "Image height has not a correct unit (cm, mm, pt, in, em or ex). Turning it into centimeters.");
+      sprintf(heightString, "%licm", height);
+   }
+
+   return heightString;
+}
+
+unsigned int getNbLength(long nb)
+{
+   for (unsigned int i=0, divisor=1; ; i++, divisor*=10)
+   {
+      if (nb / divisor == 0)
+         return i;
+   }
 }
 
 char* pickURL(const char* line, unsigned int firstURLIndex)

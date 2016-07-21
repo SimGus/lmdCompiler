@@ -34,7 +34,7 @@ STATUS compile(const char* inputFileName, const char* outputFileName);
 /*
  * Translates each line of the input file to bodyOutputFile
  */
-void translateLineByLine(FILE* bodyOutputFile);
+STATUS translateLineByLine(FILE* bodyOutputFile);
 /*
  * Translate the line to bodyOutputFile
  * If there's need to interpret several lines at once, it calls getNextLineFromFile
@@ -110,6 +110,49 @@ char* pickImageFileName(const char* line);
  * @post : the returned value MUST be freed
  */
 char* pickImageLabel(const char* line);
+
+/*
+ * @return :   true if the line contains '|' not in a comment
+ *             false otherwise
+ */
+bool containsImageSize(const char* line);
+
+/*
+ * @pre : line must contain a size tag
+ * @return :   true if the size tag doesn't contain ':'
+ *             false otherwise
+ */
+bool containsImageScale(const char* line);
+
+/*
+ * @pre : line must contain the scale of the image
+ * @return :   a double containing the scale of the image
+ *             -1.0 if there was an error
+ */
+double getImageScale(const char* line);
+
+/*
+ * @pre : line must contain the width of the image
+ * @return :   a string containing the width and unit of the width of the image
+ *             "/" if it wasn't specified
+ *             NULL if it wasn't found
+ * @post : the string returned MUST be freed
+ */
+char* getImageWidth(const char* line);
+
+/*
+ * @pre : line must contain the height of the image
+ * @return :   a string containing the height and unit of the height of the image
+ *             "/" if it wasn't specified
+ *             NULL if it wasn't found
+ * @post : the string returned MUST be freed
+ */
+char* getImageHeight(const char* line);
+
+/*
+ * @return : length of the number in base 10
+ */
+unsigned int getNbLength(long nb);
 
 /*
  * @pre : firstURLIndex must be the index in line pointing to the 'h' of "http"

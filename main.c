@@ -247,6 +247,7 @@ int main(int argc, char* argv[])
    if (outputFilesType == PDF)
    {
       //=====================Delete tex file===========================================
+      puts("Deleting tex file...");
       if (deleteFile(texFileName) != RETURN_SUCCESS)
       {
          WARNING_FUNC("main", "tex file wasn't deleted");
