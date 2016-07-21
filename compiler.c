@@ -303,7 +303,7 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
          }
       }
       else
-         MD_WARNING(currentLineNb, "Couldn't include image");
+         MD_ERROR(currentLineNb, "Couldn't include image.");
 
       nbAlinea--;
       writeAlinea(bodyOutputFile);
@@ -375,12 +375,6 @@ unsigned short getIndentation(const char* line)
 
 char* getTitleOfPart(const char* line)
 {
-   if (line[0] != '#')
-   {
-      WARNING_FUNC("getTitleOfPart", "Tried to get a title from a non-title line")
-      return NULL;
-   }
-
    int firstTitleCharIndex;
    for (firstTitleCharIndex=1; line[firstTitleCharIndex]=='#' || line[firstTitleCharIndex]==' ' || line[firstTitleCharIndex]=='\t'; firstTitleCharIndex++)
       ;
@@ -553,6 +547,8 @@ bool containsImageSize(const char* line)
    {
       if (line[i] == '|')
          return true;
+      if (line[i] == '\\')
+         i++;
    }
    return false;
 }
@@ -565,7 +561,7 @@ bool containsImageScale(const char* line)
    if (strchr(line, '%') == NULL)
       return false;
 
-   char* pointerToPipe = strchr(line, '|');
+   char* pointerToPipe = getPointerToImageSizeTag(line);
    for (unsigned int i=0; pointerToPipe[i]!='>' && pointerToPipe[i]!='\0'; i++)
    {
       if (pointerToPipe[i] == ':')
@@ -576,7 +572,7 @@ bool containsImageScale(const char* line)
 
 double getImageScale(const char* line)
 {
-   char* pointerToPipe = strchr(line, '|');
+   char* pointerToPipe = getPointerToImageSizeTag(line);
 
    unsigned short firstScaleIndex;
    for (firstScaleIndex=1; pointerToPipe[firstScaleIndex]==' ' || pointerToPipe[firstScaleIndex]=='\t'; firstScaleIndex++)
@@ -605,7 +601,7 @@ double getImageScale(const char* line)
 
 char* getImageWidth(const char* line)
 {
-   char* pointerToPipe = strchr(line, '|');
+   char* pointerToPipe = getPointerToImageSizeTag(line);
 
    unsigned short firstWidthIndex;
    for (firstWidthIndex=1; pointerToPipe[firstWidthIndex]==' ' || pointerToPipe[firstWidthIndex]=='\t'; firstWidthIndex++)
@@ -727,6 +723,18 @@ char* getImageHeight(const char* line)
    }
 
    return heightString;
+}
+
+char* getPointerToImageSizeTag(const char* line)
+{
+   for (unsigned int i=0; line[i]!='\0' && line[i]!='>' && line[i]!='%'; i++)
+   {
+      if (line[i] == '|')
+         return (char*) &line[i];
+      if (line[i] == '\\')
+         i++;
+   }
+   return NULL;
 }
 
 unsigned int getNbLength(long nb)

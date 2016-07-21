@@ -56,7 +56,6 @@ unsigned short getIndentation(const char* line);
 /*
  * @return :   a string containing the useful part of a line containing the name of a new section
  *                (thus comments, spaces and hashtags are remmoved)
- *             NULL if the line is not a title line
  * @post : the string returned MUST be freed
  */
 char* getTitleOfPart(const char* line);
@@ -148,6 +147,13 @@ char* getImageWidth(const char* line);
  * @post : the string returned MUST be freed
  */
 char* getImageHeight(const char* line);
+
+/*
+ * @return :   a pointer to the pipe that specifies the beginning of the image size
+ *             NULL if it wasn't found (which shouldn't happen)
+ * @post : the pointer MUST NOT be freed
+ */
+char* getPointerToImageSizeTag(const char* line);
 
 /*
  * @return : length of the number in base 10
