@@ -33,46 +33,51 @@ STATUS compileTexToPdf(const char* outputFileName, bool displayPdflatexStdout, b
    if (!keepTmpFiles)
    {
       //=====================Delete temporary files==========================
-      char* fileNameToDelete = malloc( (strlen(outputFileName)+5)*sizeof(char) );
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".aux");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .aux file");
-      }
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".out");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .out file");
-      }
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".log");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .log file");
-      }
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".nav");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .nav file");
-      }
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".snm");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .snm file");
-      }
-
-      sprintf(fileNameToDelete, "%s%s", outputFileName, ".toc");
-      if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
-      {
-         WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .toc file");
-      }
-
-      free(fileNameToDelete);
+      deleteTemporaryFiles(outputFileName);
    }
 
    return RETURN_SUCCESS;
+}
+
+void deleteTemporaryFiles(const char* outputFileName)
+{
+   char* fileNameToDelete = malloc( (strlen(outputFileName)+5)*sizeof(char) );
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".aux");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .aux file");
+   }
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".out");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .out file");
+   }
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".log");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .log file");
+   }
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".nav");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .nav file");
+   }
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".snm");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .snm file");
+   }
+
+   sprintf(fileNameToDelete, "%s%s", outputFileName, ".toc");
+   if (deleteFile(fileNameToDelete) != RETURN_SUCCESS)
+   {
+      WARNING_FUNC("compileTexToPdf", "There seemed to have a problem deleting temporary .toc file");
+   }
+
+   free(fileNameToDelete);
 }

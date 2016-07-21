@@ -78,6 +78,7 @@ char* addTexExtension(const char* fileName)
 	fileNameWithExtension[fileNameLength+1] = 't';
 	fileNameWithExtension[fileNameLength+2] = 'e';
 	fileNameWithExtension[fileNameLength+3] = 'x';
+	fileNameWithExtension[fileNameLength+4] = '\0';
 
 	return fileNameWithExtension;
 }
@@ -98,6 +99,7 @@ char* addPdfExtension(const char* fileName)
 	fileNameWithExtension[fileNameLength+1] = 'p';
 	fileNameWithExtension[fileNameLength+2] = 'd';
 	fileNameWithExtension[fileNameLength+3] = 'f';
+	fileNameWithExtension[fileNameLength+4] = '\0';
 
 	return fileNameWithExtension;
 }

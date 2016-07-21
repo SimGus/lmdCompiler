@@ -223,7 +223,6 @@ int main(int argc, char* argv[])
 	//===================Translate to tex file==================================
 	char* texFileName = addTexExtension(outputFileName);
 	STATUS err = compile(inputFileName, texFileName);
-	free(texFileName);
 	if (err != RETURN_SUCCESS)
 	{
 		puts("The compilation to tex file ended with an error code.");
@@ -244,6 +243,16 @@ int main(int argc, char* argv[])
 		}
 		puts("PDF translation over.");
 	}
+
+   if (outputFilesType == PDF)
+   {
+      //=====================Delete tex file===========================================
+      if (deleteFile(texFileName) != RETURN_SUCCESS)
+      {
+         WARNING_FUNC("main", "tex file wasn't deleted");
+      }
+   }
+   free(texFileName);
 
 	puts("Done.");
 
