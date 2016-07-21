@@ -171,9 +171,12 @@ int main(int argc, char* argv[])
 				}
 			}
 
-			inputFileName = getBaseName(argv[i]);
-			if (inputFileName == NULL)
-				inputFileName = duplicateString(argv[i]);
+			char* tmp = getBaseName(argv[i]);
+         if (tmp == NULL)
+				tmp = duplicateString(argv[i]);
+         inputFileName = addLmdExtension(tmp);
+         if (inputFileName != tmp)
+            free(tmp);
 		}
 	}
 	if (outputFileName == NULL)

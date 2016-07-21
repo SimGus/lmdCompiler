@@ -62,6 +62,25 @@ char* getOutputNameFromInputName(const char* inputFileName)
 	return outputFileName;
 }
 
+char* addLmdExtension(const char* fileName)
+{
+	char* answer;
+	unsigned short length = strlen(fileName);
+	if (fileName[length-4] == '.' && fileName[length-3] == 'l' && fileName[length-2] == 'm' && fileName[length-1] == 'd')
+		return (char*) fileName;//cast removes compiler warning
+
+	answer = malloc( (length+5)*sizeof(char) );
+	strcpy(answer, fileName);
+
+	answer[length] = '.';
+	answer[length+1] = 'l';
+	answer[length+2] = 'm';
+	answer[length+3] = 'd';
+	answer[length+4] = '\0';
+
+	return answer;
+}
+
 char* addTexExtension(const char* fileName)
 {
 	if (fileName == NULL || strcmp(fileName, "") == 0)

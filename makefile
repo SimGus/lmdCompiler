@@ -1,6 +1,7 @@
 CC = gcc
 FLAGS = -g -Wall --std=c99
 PROG = lmd
+export PATH := $(PATH):$$HOME/myProgs
 
 all : $(PROG)
 
@@ -35,3 +36,10 @@ files.o : files.h files.c error.h
 
 texToPdf.o : texToPdf.h texToPdf.c error.h files.o
 	$(CC) $(FLAGS) -c texToPdf.c
+
+install : $(PROG)
+	mkdir -p ~/myProgs;
+	cp lmd ~/myProgs
+	@echo
+	@echo 'Add this line to ~/.bashrc : "export PATH="$$PATH:$$HOME/myProgs"" and run "source ~/.bashrc"'
+	@echo 'This will add directory "~/myProgs" to $$PATH variable, to be able to use "lmd" instead of "~/myProgs/lmd" in command line'

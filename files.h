@@ -20,6 +20,7 @@ char* getBaseName(const char* filePath);
 
 char* getOutputNameFromInputName(const char* inputFileName);
 
+char* addLmdExtension(const char* fileName);
 char* addTexExtension(const char* fileName);
 char* addPdfExtension(const char* fileName);
 
