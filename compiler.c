@@ -4,6 +4,7 @@ FILE* inputFile = NULL;
 unsigned int currentLineNb = 0;
 unsigned char nbAlinea = 0;
 unsigned short inputIndentationNb = 0;
+bool firstLineOfBodyInterpreted = false;
 
 STATUS compile(const char* inputFileName, const char* outputFileName, bool keepTmpFile)
 {
@@ -122,6 +123,10 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
 
       if (line[1] != '#')//title
       {
+         if (firstLineOfBodyInterpreted)
+         {
+            MD_WARNING(currentLineNb, "This line gets added to the title even though some lines which are not part of the title have already been written.");
+         }
          addLineToTitle(translatedTitle);
          if (commentIndex >= 0)
             addCommentToTitle(&line[commentIndex]);
@@ -130,6 +135,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else if (line[2] != '#')//part
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\\part{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
@@ -139,6 +146,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else if (line[3] != '#')//section
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\\section{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
@@ -148,6 +157,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else if (line[4] != '#')//subsection
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\t\\subsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
@@ -157,6 +168,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else if (line[5] != '#')//subsubsection
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\t\t\\subsubsection{%s}%s\n\n", translatedTitle, &line[commentIndex]);
          else
@@ -166,6 +179,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else if (line[6] != '#')//paragraph
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\t\t\t\\paragraph{%s}%s\n", translatedTitle, &line[commentIndex]);
          else
@@ -175,6 +190,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       }
       else//subparagraph
       {
+         firstLineOfBodyInterpreted = true;
+
          if (commentIndex >= 0)
             fprintf(bodyOutputFile, "\t\t\t\t\t\t\\subparagraph{%s}%s\n", translatedTitle, &line[commentIndex]);
          else
@@ -188,6 +205,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else if (isMultilinePlainTextOpeningTag(line))
    {
+      firstLineOfBodyInterpreted = true;
+
       int beginningLineNb = currentLineNb;
 
       char* nextLine = getNextLineFromFile();
@@ -218,6 +237,8 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else if (isImageLine(line))
    {
+      firstLineOfBodyInterpreted = true;
+
       addImagesToPreamble();
 
       if (strchr(line, '>') == NULL)
@@ -315,22 +336,30 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    }
    else if (isItemizeLine(line))
    {
+      firstLineOfBodyInterpreted = true;
+
       addEnumToPreamble();
       writeItemize(bodyOutputFile, line);
       fputc('\n', bodyOutputFile);
    }
    else if (isEnumLine(line))
    {
+      firstLineOfBodyInterpreted = true;
+
       addEnumToPreamble();
       writeEnumerate(bodyOutputFile, line);
       fputc('\n', bodyOutputFile);
    }
    else if (isSimpleTableTagLine(line))
    {
+      firstLineOfBodyInterpreted = true;
+
       writeSimpleTable(bodyOutputFile);
    }
    else
    {
+      firstLineOfBodyInterpreted = true;
+
       writeAlinea(bodyOutputFile);
       translateToFile(bodyOutputFile, line);
       fputc('\n', bodyOutputFile);
