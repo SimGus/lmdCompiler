@@ -115,7 +115,7 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    {
       char* partTitle = getTitleOfPart(line);
       char* translatedTitle = NULL;
-      translateString(partTitle, &translatedTitle);
+      translateString(partTitle, &translatedTitle, true);
       removeUselessSpaces(translatedTitle);
 
       int commentIndex = getFirstIndexOfComment(line);
@@ -297,7 +297,7 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
          char* translatedLabel;
          if (label != NULL)
          {
-            translateString(label, &translatedLabel);
+            translateString(label, &translatedLabel, false);
 
             writeAlinea(bodyOutputFile);
             fprintf(bodyOutputFile, "\\caption{%s}\n", translatedLabel);
@@ -918,9 +918,14 @@ void writeItemizeItem(FILE* bodyOutputFile, const char* line)
    char* item = pickItemFromItemize(line);
    if (item == NULL)
       return;
+   char* translatedItem;
+   translateString(item, &translatedItem, false);
+
    writeAlinea(bodyOutputFile);
-   fprintf(bodyOutputFile, "\\item %s\n", item);
+   fprintf(bodyOutputFile, "\\item %s\n", translatedItem);
+
    free(item);
+   free(translatedItem);
 }
 
 bool isEnumLine(const char* line)
@@ -1003,9 +1008,14 @@ void writeEnumerateItem(FILE* bodyOutputFile, const char* line)
    char* item = pickItemFromEnumerate(line);
    if (item == NULL)
       return;
+   char* translatedItem;
+   translateString(item, &translatedItem, false);
+
    writeAlinea(bodyOutputFile);
-   fprintf(bodyOutputFile, "\\item %s\n", item);
+   fprintf(bodyOutputFile, "\\item %s\n", translatedItem);
+
    free(item);
+   free(translatedItem);
 }
 
 char* pickItemFromEnumerate(const char* line)
@@ -1111,7 +1121,7 @@ void writeSimpleTable(FILE* bodyOutputFile)
                break;
             }
 
-            translateString(currentCellContent, &currentTranslatedCellContent);
+            translateString(currentCellContent, &currentTranslatedCellContent, false);
             //TODO translate cell
             if (i == 0)
             {
@@ -1256,7 +1266,7 @@ bool isSimpleTableHorizontalLine(const char* line)
    return true;
 }
 
-void translateString(const char* source, char** destination)
+void translateString(const char* source, char** destination, bool isTitle)
 {
 	int translatedStringLength = strlen(source)+1;
 	char* translatedString = malloc(translatedStringLength*sizeof(char));
@@ -1268,6 +1278,12 @@ void translateString(const char* source, char** destination)
 	int i, iTranslated;
 	for (i=0, iTranslated = 0; source[i] != '\0'; i++, iTranslated++)
 	{
+      if (!isTitle && getTop(&environments) == PLAIN_TEXT && source[i] != ']')
+      {
+         translatedString[iTranslated] = source[i];
+         continue;
+      }
+
 		switch (source[i])
 		{
 			case '\\':
@@ -1450,6 +1466,30 @@ void translateString(const char* source, char** destination)
 				else
 					translatedString[iTranslated] = '!';
 				break;
+         case '[':
+            if (isTitle)
+               translatedString[iTranslated] = '[';
+            else
+            {
+               //opening PLAIN_TEXT environment
+               pilePush(&environments, PLAIN_TEXT);
+               translatedStringLength += 6;//already putting a space for the closing '?'
+               reallocate(&translatedString, translatedStringLength);
+               translatedString[iTranslated] = '\0';
+               sprintf(translatedString, "%s\\verb?", translatedString);
+               iTranslated += 5;
+            }
+            break;
+         case ']':
+            if (!isTitle && getTop(&environments) == PLAIN_TEXT)
+            {
+               //closing PLAIN_TEXT environment
+               pilePop(&environments);
+               translatedString[iTranslated] = '?';
+            }
+            else
+               translatedString[iTranslated] = ']';
+            break;
 			default:
 				translatedString[iTranslated] = source[i];
 				break;
@@ -1458,30 +1498,41 @@ void translateString(const char* source, char** destination)
 
 	while (environments.top != NULL)
 	{
+      char endChar;
 		switch(pilePop(&environments))//send warnings on stdout
 		{
 			case BOLD:
 				MD_WARNING(currentLineNb, "Missing bold environment closing tag (**)");
+            endChar = '}';
 				break;
 			case ITALIC:
 				MD_WARNING(currentLineNb, "Missing italic environment closing tag (*)");
+            endChar = '}';
 				break;
 			case UNDERLINE:
 				MD_WARNING(currentLineNb, "Missing underline environment closing tag (_)");
+            endChar = '}';
 				break;
 			case STRIKETHROUGH:
 				MD_WARNING(currentLineNb, "Missing strikethrough environment closing tag (~)");
+            endChar = '}';
 				break;
 			case EMPHASIZED:
 				MD_WARNING(currentLineNb, "Missing emphasized environment closing tag (!!)");
+            endChar = '}';
 				break;
+         case PLAIN_TEXT:
+            MD_WARNING(currentLineNb, "Missing plain text environment closing tag (])");
+            endChar = '?';
+            break;
 			default:
 				MD_WARNING(currentLineNb, "Missing unknown environment closing tag");
+            endChar = '}';
 				break;
 		}
 		translatedStringLength++;
 		reallocate(&translatedString, translatedStringLength);
-		translatedString[iTranslated] = '}';
+		translatedString[iTranslated] = endChar;
 		iTranslated++;
 	}
 	translatedString[iTranslated] = '\0';
@@ -1694,7 +1745,7 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                         fprintf(bodyOutputFile, "\\url{%s}", url);
                      else//label
                      {
-                        translateString(urlLabel, &translatedUrlLabel);
+                        translateString(urlLabel, &translatedUrlLabel, false);
 
                         fprintf(bodyOutputFile, "\\href{%s}{%s}", url, translatedUrlLabel);
                         free(urlLabel);

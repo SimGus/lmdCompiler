@@ -265,9 +265,10 @@ bool isSimpleTableHorizontalLine(const char* line);
 
 /*
  * Translates source (in markdown) to destination (in LaTeX)
+ * No plain text if isTitle == true
  * @post : *destination MUST be freed
  */
-void translateString(const char* source, char** destination);
+void translateString(const char* source, char** destination, bool isTitle);
 
 /*
  * Translates string (in mardown) in LaTeX and writes it directly in the file bodyOutputFile
