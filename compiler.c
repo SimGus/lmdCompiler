@@ -1467,7 +1467,17 @@ void translateString(const char* source, char** destination, bool isTitle)
 					translatedString[iTranslated] = '!';
 				break;
          case '[':
-            if (isTitle)
+            if (isTitle && getTop(&environments) != TELETYPE)
+            {
+               //opening TELETYPE environment
+               pilePush(&environments, TELETYPE);
+               translatedStringLength += 8;//making room for the closing '}'
+               reallocate(&translatedString, translatedStringLength);
+               translatedString[iTranslated] = '\0';
+               sprintf(translatedString, "%s\\texttt{", translatedString);
+               iTranslated += 7;
+            }
+            else if (isTitle)//already in TELETYPE environment
                translatedString[iTranslated] = '[';
             else
             {
@@ -1487,7 +1497,13 @@ void translateString(const char* source, char** destination, bool isTitle)
                pilePop(&environments);
                translatedString[iTranslated] = '?';
             }
-            else
+            else if (isTitle && getTop(&environments) == TELETYPE)
+            {
+               //closing TELETYPE environment
+               pilePop(&environments);
+               translatedString[iTranslated] = '}';
+            }
+            else//not in TELETYPE or PLAIN_TEXT environment
                translatedString[iTranslated] = ']';
             break;
 			default:
