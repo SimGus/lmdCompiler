@@ -18,7 +18,7 @@ typedef enum
 
 void printHelp()
 {
-	puts("Markdown to LaTeX\tVersion : \u03B21.0");
+	puts("Markdown to LaTeX\tVersion : \u03B21.1");
 	puts("Written by Simon Gustin in 2016");
 	puts("\tUse : ./PROGRAM [OPTIONS] InputFileName");
 	puts("\t\tOptions :");

@@ -8,6 +8,7 @@ void initPreamble()
    preamble.containsEnumerations = false;
    preamble.containsImages = false;
    preamble.containsLinks = false;
+   preamble.containsVerbatim = false;
 }
 
 void addStrikethroughsToPreamble()
@@ -28,6 +29,11 @@ void addImagesToPreamble()
 void addLinksToPreamble()
 {
    preamble.containsLinks = true;
+}
+
+void addVerbatimToPreamble()
+{
+   preamble.containsVerbatim = true;
 }
 
 void addLineToTitle(const char* newLine)
@@ -88,6 +94,8 @@ int insertPreamble(FILE* tmpBodyOutputFile, FILE* outputFile)
       fputs("\\usepackage{graphicx}\n", outputFile);
    if (preamble.containsLinks)
       fputs("\\usepackage{hyperref}\n", outputFile);
+   if (preamble.containsVerbatim)
+      fputs("\\usepackage{spverbatim}\n", outputFile);
 
    fputs("\\usepackage{textcomp}\n", outputFile);
    fputs("\\usepackage[hscale=0.73,vscale=0.82]{geometry}\n", outputFile);

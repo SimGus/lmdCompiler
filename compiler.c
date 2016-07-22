@@ -207,11 +207,13 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
    {
       firstLineOfBodyInterpreted = true;
 
+      addVerbatimToPreamble();
+
       int beginningLineNb = currentLineNb;
 
       char* nextLine = getNextLineFromFile();
 
-      fputs("\\begin{verbatim}\n", bodyOutputFile);
+      fputs("\\begin{spverbatim}\n", bodyOutputFile);
 
       while (!isMultilinePlainTextClosingTag(nextLine))
       {
@@ -233,7 +235,7 @@ STATUS interpretLine(FILE* bodyOutputFile, const char* line)
       else
          MD_WARNING(beginningLineNb, "Missing closing tag for multiline plain text (])");
 
-      fputs("\\end{verbatim}\n", bodyOutputFile);
+      fputs("\\end{spverbatim}\n", bodyOutputFile);
    }
    else if (isImageLine(line))
    {
@@ -665,7 +667,6 @@ char* getImageWidth(const char* line)
       free(tmp);
       return NULL;
    }
-   free(tmp);
    if (width <= 0)
    {
       MD_WARNING(currentLineNb, "Image width should be greater than 0. Turning it into positive number.");
@@ -691,6 +692,8 @@ char* getImageWidth(const char* line)
       MD_WARNING(currentLineNb, "Image width has not a correct unit (cm, mm, pt, in, em or ex). Turning it into centimeters.");
       sprintf(widthString, "%licm", width);
    }
+
+   free(tmp);
 
    return widthString;
 }
@@ -728,7 +731,6 @@ char* getImageHeight(const char* line)
       free(tmp);
       return NULL;
    }
-   free(tmp);
    if (height <= 0)
    {
       MD_WARNING(currentLineNb, "Image height must be greater than 0. Turning it into a positive number.");
@@ -754,6 +756,8 @@ char* getImageHeight(const char* line)
       MD_WARNING(currentLineNb, "Image height has not a correct unit (cm, mm, pt, in, em or ex). Turning it into centimeters.");
       sprintf(heightString, "%licm", height);
    }
+
+   free(tmp);
 
    return heightString;
 }

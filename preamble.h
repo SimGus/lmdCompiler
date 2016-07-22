@@ -19,6 +19,7 @@ typedef struct
    bool containsEnumerations;
    bool containsImages;
    bool containsLinks;
+   bool containsVerbatim;
    char* title;
    char* titleComments;
 } Preamble;
@@ -29,6 +30,7 @@ void addStrikethroughsToPreamble();
 void addEnumToPreamble();
 void addImagesToPreamble();
 void addLinksToPreamble();
+void addVerbatimToPreamble();
 
 void addLineToTitle(const char* newLine);
 void addCommentToTitle(const char* newComment);
