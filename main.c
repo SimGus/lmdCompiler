@@ -52,7 +52,7 @@ void freeFileNames(char* workingDirectory, char* inputFileName, char* outputFile
 int main(int argc, char* argv[])
 {
 	char *workingDirectory = NULL, *inputFileName = NULL, *outputFileName = NULL;
-	OutputType outputFilesType = BOTH;
+	OutputType outputFilesType = PDF;
 	bool keepPdflatexFiles = false, keepTmpLmdFiles = false, displayPdflatexStdout = false;
 
 	if (argc <= 1 || strcmp(argv[1], "--help") == 0)
