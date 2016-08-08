@@ -12,6 +12,7 @@
 		~Texte barré~
 		!!Texte important!!
 		>>      		Citation 
+		@@Not interpreted text : \LaTeX{}@@
 
 ### *Caractères particuliers* %comment
 	À n'utiliser que si la compilation les interprète comme du markdown

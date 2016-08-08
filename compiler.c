@@ -1600,9 +1600,19 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
    {
       if (getTop(&environments) == PLAIN_TEXT)
       {
-         if (string[i] == ']')//closr PLAIN_TEXT environment
+         if (string[i] == ']')//close PLAIN_TEXT environment
          {
             fputc('?', bodyOutputFile);
+            pilePop(&environments);
+         }
+         else
+            fputc(string[i], bodyOutputFile);
+      }
+      else if (getTop(&environments) == LATEX)
+      {
+         if (string[i] == '@' && string[i+1] == '@')//close LATEX environment
+         {
+            i++;
             pilePop(&environments);
          }
          else
@@ -1678,6 +1688,9 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                      break;
                   case '=':
                      fputc('=', bodyOutputFile);
+                     break;
+                  case '@':
+                     fputc('@', bodyOutputFile);
                      break;
                   default:
                      fprintf(bodyOutputFile, "\\textbackslash %c", string[i]);
@@ -1814,6 +1827,20 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
                fputs("\\verb?", bodyOutputFile);
                pilePush(&environments, PLAIN_TEXT);
                break;
+            case '@':
+               if (string[i+1] != '@')
+                  fputc('@', bodyOutputFile);
+               else if (getTop(&environments) == LATEX)//close LATEX environment //Should never happen
+               {
+                  i++;
+                  pilePop(&environments);
+               }
+               else//open LATEX environment
+               {
+                  i++;
+                  pilePush(&environments, LATEX);
+               }
+               break;
             default:
                fputc(string[i], bodyOutputFile);
                break;
@@ -1852,6 +1879,9 @@ void translateToFile(FILE* bodyOutputFile, const char* string)
             break;
          case QUOTE://QUOTE environment can be unclosed
             fputc('}', bodyOutputFile);
+            break;
+         case LATEX:
+            MD_WARNING(currentLineNb, "Missing closing tag for not interpreted environment (@@).");
             break;
          default:
             MD_ERROR(currentLineNb, "An unknown environment was detected and is missing a closing tag. Output may not be usable.")
