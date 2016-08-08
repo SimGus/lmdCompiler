@@ -1,5 +1,5 @@
 CC = gcc
-FLAGS = -g -Wall --std=c99
+FLAGS = -g -Wall --std=c99 -O3
 PROG = lmd
 export PATH := $(PATH):$$HOME/myProgs
 
