@@ -31,10 +31,12 @@
  *             RETURN_FAILURE if there was a problem with files or translation
  */
 STATUS compile(const char* inputFileName, const char* outputFileName, bool keepTmpFile);
+
 /*
  * Translates each line of the input file to bodyOutputFile
  */
 STATUS translateLineByLine(FILE* bodyOutputFile);
+
 /*
  * Translate the line to bodyOutputFile
  * If there's need to interpret several lines at once, it calls getNextLineFromFile
